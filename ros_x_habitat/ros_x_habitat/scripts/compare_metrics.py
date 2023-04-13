@@ -1,7 +1,7 @@
 import argparse
 import os
-from src.utils import utils_logging, utils_files
-from src.constants.constants import NumericalMetrics
+from ros_x_habitat.utils import utils_logging, utils_files
+from ros_x_habitat.constants.constants import NumericalMetrics
 import csv
 from typing import Tuple, List, Dict
 import glob

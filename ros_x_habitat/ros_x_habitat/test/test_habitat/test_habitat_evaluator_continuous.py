@@ -3,8 +3,8 @@ import unittest
 
 import numpy as np
 from PIL import Image
-from src.constants.constants import NumericalMetrics
-from src.evaluators.habitat_evaluator import HabitatEvaluator
+from ros_x_habitat.constants.constants import NumericalMetrics
+from ros_x_habitat.evaluators.habitat_evaluator import HabitatEvaluator
 
 
 class TestHabitatEvaluatorContinuousCase(unittest.TestCase):

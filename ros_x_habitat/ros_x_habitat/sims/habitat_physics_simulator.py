@@ -27,7 +27,7 @@ from habitat.sims.habitat_simulator.habitat_simulator import (
 )
 from numpy import ndarray
 
-from src.sims.physics_simulator import PhysicsSimulator
+from ros_x_habitat.sims.physics_simulator import PhysicsSimulator
 
 
 @registry.register_simulator(name="Sim-Phys")

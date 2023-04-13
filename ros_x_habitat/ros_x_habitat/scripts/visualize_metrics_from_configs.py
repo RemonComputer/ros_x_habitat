@@ -1,8 +1,8 @@
 import argparse
 import os
-from src.utils import utils_files, utils_visualization
-from src.constants.constants import NumericalMetrics
-from src.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
+from ros_x_habitat.utils import utils_files, utils_visualization
+from ros_x_habitat.constants.constants import NumericalMetrics
+from ros_x_habitat.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
 
 
 def main():

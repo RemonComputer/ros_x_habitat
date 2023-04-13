@@ -3,7 +3,7 @@ from habitat.config import Config
 from habitat.config.default import get_config
 from typing import List, Tuple, Dict
 from collections import defaultdict
-from src.evaluators.evaluator import Evaluator
+from ros_x_habitat.evaluators.evaluator import Evaluator
 
 
 class HabitatSimEvaluator(Evaluator):

@@ -19,7 +19,7 @@ import pandas as pd
 import seaborn as sns
 from habitat.utils.visualizations import maps
 from PIL import Image
-from src.constants.constants import NumericalMetrics
+from ros_x_habitat.constants.constants import NumericalMetrics
 from habitat.utils.visualizations.utils import draw_collision
 
 cv2 = try_cv2_import()

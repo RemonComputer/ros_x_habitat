@@ -1,8 +1,8 @@
 import argparse
 import os
 from habitat.config.default import get_config
-from src.evaluators.habitat_evaluator import HabitatEvaluator
-from src.utils import utils_visualization, utils_files
+from ros_x_habitat.evaluators.habitat_evaluator import HabitatEvaluator
+from ros_x_habitat.utils import utils_visualization, utils_files
 from typing import Dict, List
 import numpy as np
 

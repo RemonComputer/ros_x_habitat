@@ -8,7 +8,7 @@ from habitat.core.env import Env
 from habitat.core.simulator import Observations
 from habitat.utils import profiling_wrapper
 
-from src.envs.physics_env import PhysicsEnv
+from ros_x_habitat.envs.physics_env import PhysicsEnv
 
 
 class HabitatRLEnv(gym.Env):

@@ -10,8 +10,8 @@ from habitat.utils.geometry_utils import quaternion_rotate_vector
 from threading import Lock
 from habitat.sims.habitat_simulator.actions import _DefaultHabitatSimActions
 from ros_x_habitat.srv import GetAgentPose
-from src.constants.constants import PACKAGE_NAME, ServiceNames
-from src.utils import utils_logging
+from ros_x_habitat.constants.constants import PACKAGE_NAME, ServiceNames
+from ros_x_habitat.utils import utils_logging
 
 class HabitatAgentToGazebo:
     r"""

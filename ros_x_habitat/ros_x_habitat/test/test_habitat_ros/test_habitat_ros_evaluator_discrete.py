@@ -5,9 +5,9 @@ import os
 import rospy
 import rostest
 import numpy as np
-from src.test.data.data import TestHabitatROSData
-from src.constants.constants import NumericalMetrics, PACKAGE_NAME
-from src.evaluators.habitat_ros_evaluator import HabitatROSEvaluator
+from ros_x_habitat.test.data.data import TestHabitatROSData
+from ros_x_habitat.constants.constants import NumericalMetrics, PACKAGE_NAME
+from ros_x_habitat.evaluators.habitat_ros_evaluator import HabitatROSEvaluator
 
 
 class HabitatROSEvaluatorDiscreteCase(unittest.TestCase):

@@ -17,9 +17,9 @@ from habitat.tasks.utils import cartesian_to_polar
 from tf.transformations import euler_from_quaternion, rotation_matrix
 from visualization_msgs.msg import Marker, MarkerArray
 from threading import Lock
-from ros_x_habitat.srv import GetAgentPose
-from src.constants.constants import PACKAGE_NAME, ServiceNames
-from src.utils import utils_logging
+from ros_x_habitat_interfaces.srv import GetAgentPose
+from ros_x_habitat.constants.constants import PACKAGE_NAME, ServiceNames
+from ros_x_habitat.utils import utils_logging
 
 class GazeboToHabitatAgent:
     r"""

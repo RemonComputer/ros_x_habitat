@@ -2,10 +2,10 @@ import argparse
 import os
 
 from habitat.config.default import get_config
-from src.evaluators.habitat_evaluator import HabitatEvaluator
-from src.constants.constants import NumericalMetrics
+from ros_x_habitat.evaluators.habitat_evaluator import HabitatEvaluator
+from ros_x_habitat.constants.constants import NumericalMetrics
 
-from src.utils import utils_logging, utils_visualization, utils_files
+from ros_x_habitat.utils import utils_logging, utils_visualization, utils_files
 
 
 def main():

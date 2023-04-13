@@ -4,16 +4,16 @@ from subprocess import Popen
 from typing import List, Tuple, Dict
 import numpy as np
 import rospy
-from ros_x_habitat.srv import EvalEpisode, ResetAgent, GetAgentTime
-from src.constants.constants import NumericalMetrics
-from src.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
-from src.constants.constants import (
+from ros_x_habitat_interfaces.srv import EvalEpisode, ResetAgent, GetAgentTime
+from ros_x_habitat.constants.constants import NumericalMetrics
+from ros_x_habitat.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
+from ros_x_habitat.constants.constants import (
     AgentResetCommands,
     EvalEpisodeSpecialIDs,
     PACKAGE_NAME,
     ServiceNames,
 )
-from src.utils import utils_logging
+from ros_x_habitat.utils import utils_logging
 
 
 class HabitatROSEvaluator(HabitatSimEvaluator):

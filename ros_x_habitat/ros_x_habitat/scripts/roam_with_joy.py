@@ -1,5 +1,5 @@
 import argparse
-from src.roamers.joy_habitat_roamer import JoyHabitatRoamer
+from ros_x_habitat.roamers.joy_habitat_roamer import JoyHabitatRoamer
 
 
 def main():

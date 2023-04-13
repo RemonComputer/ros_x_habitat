@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from ros_x_habitat.msg import PointGoalWithGPSCompass
+from ros_x_habitat_interfaces.msg import PointGoalWithGPSCompass
 
 
 def callback(data):

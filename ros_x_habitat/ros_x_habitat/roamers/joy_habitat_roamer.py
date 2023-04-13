@@ -4,7 +4,7 @@ import shlex
 from geometry_msgs.msg import Twist
 from subprocess import Popen
 from ros_x_habitat.srv import Roam
-from src.constants.constants import PACKAGE_NAME, ServiceNames
+from ros_x_habitat.constants.constants import PACKAGE_NAME, ServiceNames
 
 
 class JoyHabitatRoamer:

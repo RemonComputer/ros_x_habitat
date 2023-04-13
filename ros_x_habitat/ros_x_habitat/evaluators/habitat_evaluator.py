@@ -8,11 +8,11 @@ from habitat.utils.visualizations import maps
 from habitat.utils.visualizations.utils import observations_to_image
 from habitat_baselines.agents.ppo_agents import PPOAgent
 
-from src.envs.habitat_eval_rlenv import HabitatEvalRLEnv
-from src.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
-from src.constants.constants import NumericalMetrics
-from src.utils import utils_logging
-from src.utils.utils_visualization import (
+from ros_x_habitat.envs.habitat_eval_rlenv import HabitatEvalRLEnv
+from ros_x_habitat.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
+from ros_x_habitat.constants.constants import NumericalMetrics
+from ros_x_habitat.utils import utils_logging
+from ros_x_habitat.utils.utils_visualization import (
     TensorboardWriter,
     generate_video,
     colorize_and_fit_to_height,

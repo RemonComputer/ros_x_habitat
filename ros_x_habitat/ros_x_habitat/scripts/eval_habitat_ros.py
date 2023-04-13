@@ -6,9 +6,9 @@ from collections import defaultdict
 
 from habitat.config.default import get_config
 
-from src.evaluators.habitat_ros_evaluator import HabitatROSEvaluator
+from ros_x_habitat.evaluators.habitat_ros_evaluator import HabitatROSEvaluator
 
-from src.utils import utils_logging, utils_files
+from ros_x_habitat.utils import utils_logging, utils_files
 
 
 def main():

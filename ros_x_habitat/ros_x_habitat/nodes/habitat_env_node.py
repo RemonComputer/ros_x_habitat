@@ -12,18 +12,18 @@ from ros_x_habitat.msg import PointGoalWithGPSCompass, DepthImage
 from ros_x_habitat.srv import EvalEpisode, ResetAgent, GetAgentTime, Roam
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Header, Int16
-from src.constants.constants import (
+from ros_x_habitat.constants.constants import (
     EvalEpisodeSpecialIDs,
     NumericalMetrics,
     PACKAGE_NAME,
     ServiceNames,
 )
-from src.envs.habitat_eval_rlenv import HabitatEvalRLEnv
-from src.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
+from ros_x_habitat.envs.habitat_eval_rlenv import HabitatEvalRLEnv
+from ros_x_habitat.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
 import time
-from src.utils import utils_logging
-from src.utils.utils_visualization import generate_video, observations_to_image_for_roam
-from src.measures.top_down_map_for_roam import (
+from ros_x_habitat.utils import utils_logging
+from ros_x_habitat.utils.utils_visualization import generate_video, observations_to_image_for_roam
+from ros_x_habitat.measures.top_down_map_for_roam import (
     TopDownMapForRoam,
     add_top_down_map_for_roam_to_config,
 )

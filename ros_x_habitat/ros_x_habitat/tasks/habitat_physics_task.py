@@ -20,7 +20,7 @@ from habitat.tasks.nav.nav import (
     StopAction,
 )
 import pandas as pd
-from src.utils.utils_logging import log_continuous_actuation
+from ros_x_habitat.utils.utils_logging import log_continuous_actuation
 
 
 @registry.register_task(name="Nav-Phys")

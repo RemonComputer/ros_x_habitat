@@ -7,9 +7,9 @@ import numpy as np
 import rostest
 
 from mock_habitat_ros_evaluator import MockHabitatROSEvaluator
-from src.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
-from src.constants.constants import NumericalMetrics, PACKAGE_NAME
-from src.test.data.data import TestHabitatROSData
+from ros_x_habitat.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
+from ros_x_habitat.constants.constants import NumericalMetrics, PACKAGE_NAME
+from ros_x_habitat.test.data.data import TestHabitatROSData
 
 
 class HabitatROSEnvNodeDiscreteCase(unittest.TestCase):

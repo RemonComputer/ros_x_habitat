@@ -21,9 +21,9 @@ from ros_x_habitat.srv import ResetAgent, GetAgentTime
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int16
-from src.constants.constants import AgentResetCommands, PACKAGE_NAME, ServiceNames
-from src.test.data.data import TestHabitatROSData
-from src.utils import utils_logging
+from ros_x_habitat.constants.constants import AgentResetCommands, PACKAGE_NAME, ServiceNames
+from ros_x_habitat.test.data.data import TestHabitatROSData
+from ros_x_habitat.utils import utils_logging
 
 
 class MockHabitatAgentNode:

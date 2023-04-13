@@ -9,8 +9,8 @@ import rostest
 
 from mock_env_node import MockHabitatEnvNode
 from ros_x_habitat.srv import ResetAgent, GetAgentTime
-from src.constants.constants import AgentResetCommands, PACKAGE_NAME, ServiceNames
-from src.test.data.data import TestHabitatROSData
+from ros_x_habitat.constants.constants import AgentResetCommands, PACKAGE_NAME, ServiceNames
+from ros_x_habitat.test.data.data import TestHabitatROSData
 
 
 class HabitatROSAgentNodeDiscreteCase(unittest.TestCase):

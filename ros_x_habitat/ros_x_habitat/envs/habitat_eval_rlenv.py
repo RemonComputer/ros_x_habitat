@@ -2,7 +2,7 @@ from logging import Logger
 
 from habitat.core.simulator import Observations
 
-from src.envs.habitat_rlenv import HabitatRLEnv
+from ros_x_habitat.envs.habitat_rlenv import HabitatRLEnv
 
 
 class HabitatEvalRLEnv(HabitatRLEnv):
