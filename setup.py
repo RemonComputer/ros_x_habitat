@@ -4,7 +4,7 @@ package_name = 'ros_x_habitat'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.0.1',
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -15,7 +15,8 @@ setup(
     zip_safe=True,
     maintainer='remon',
     maintainer_email='RemonComputer@gmail.com',
-    description='TODO: Package description',
+    description='A bridge interface between Habitat Reinforcement learning'
+                ' simulator and ROS 2',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
