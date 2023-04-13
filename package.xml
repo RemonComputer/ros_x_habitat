@@ -5,7 +5,7 @@
   <version>0.0.1</version>
   <description>A bridge interface between Habitat Reinforcement learning simulator and ROS 2</description>
   <maintainer email="RemonComputer@gmail.com">remon</maintainer>
-  <license>TODO: License declaration</license>
+  <license>CC-BY-4.0</license>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

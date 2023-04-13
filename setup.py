@@ -17,7 +17,7 @@ setup(
     maintainer_email='RemonComputer@gmail.com',
     description='A bridge interface between Habitat Reinforcement learning'
                 ' simulator and ROS 2',
-    license='TODO: License declaration',
+    license='CC-BY-4.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
