@@ -7,33 +7,21 @@
   <maintainer email="RemonComputer@gmail.com">remon</maintainer>
   <license>CC-BY-4.0</license>
 
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
-  <member_of_group>rosidl_interface_packages</member_of_group>
-
-  <buildtool_depend>colcon</buildtool_depend>
   <build_depend>rclcpp</build_depend>
   <build_depend>rclpy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>rclpy</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>python3-pandas</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
 
 
   <export>
-    <!-- <build_type>ament_python</build_type> -->
     <build_type>ament_python</build_type>
   </export>
 </package>
