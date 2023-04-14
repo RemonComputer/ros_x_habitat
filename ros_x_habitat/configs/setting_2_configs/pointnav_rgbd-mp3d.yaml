@@ -1,35 +1,41 @@
-ENVIRONMENT:
-  MAX_EPISODE_STEPS: 500
-  ITERATOR_OPTIONS:
-    SHUFFLE: False
-    GROUP_BY_SCENE: True
-    CYCLE: False
-SIMULATOR:
-  AGENT_0:
-    SENSORS: ['RGB_SENSOR', 'DEPTH_SENSOR']
-  HABITAT_SIM_V0:
-    GPU_DEVICE_ID: 0
-  RGB_SENSOR:
-    WIDTH: 256
-    HEIGHT: 256
-  DEPTH_SENSOR:
-    WIDTH: 256
-    HEIGHT: 256
-TASK:
-  TYPE: Nav-v0
-  SUCCESS_DISTANCE: 0.2
-
-  SENSORS: ['POINTGOAL_WITH_GPS_COMPASS_SENSOR']
-  POINTGOAL_WITH_GPS_COMPASS_SENSOR:
-    GOAL_FORMAT: "POLAR"
-    DIMENSIONALITY: 2
-  GOAL_SENSOR_UUID: pointgoal_with_gps_compass
-
-  MEASUREMENTS: ['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL']
-  SUCCESS:
+habitat:
+  seed: 7
+  environment:
+    max_episode_steps: 500
+    iterator_options:
+      shuffle: False
+      group_by_scene: True
+      cycle: False
+  simulator:
+    agents:
+      AGENT_0:
+        sim_sensors:
+          rgb_sensor:
+            width: 256
+            height: 256
+            type: CompassSensor
+          depth_sensor:
+            width: 256
+            height: 256
+    HABITAT_SIM_V0:
+      GPU_DEVICE_ID: 0
+    type: 'Sim-v0'
+  TASK:
+    TYPE: Nav-v0
     SUCCESS_DISTANCE: 0.2
-    
-DATASET:
-  TYPE: PointNav-v1
-  SPLIT: test
-  DATA_PATH: data/datasets/pointnav/mp3d/v1/{split}/{split}.json.gz
+
+    SENSORS: ['POINTGOAL_WITH_GPS_COMPASS_SENSOR']
+    POINTGOAL_WITH_GPS_COMPASS_SENSOR:
+      GOAL_FORMAT: "POLAR"
+      DIMENSIONALITY: 2
+    GOAL_SENSOR_UUID: pointgoal_with_gps_compass
+
+    MEASUREMENTS: ['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL']
+    SUCCESS:
+      SUCCESS_DISTANCE: 0.2
+  dataset:
+    type: PointNav-v1
+    split: test
+    data_path: data/datasets/pointnav/mp3d/v1/{split}/{split}.json.gz
+    scenes_dir: data/scene_datasets/mp3d/
+    content_scenes: ["yqstnuAEVhm"]
