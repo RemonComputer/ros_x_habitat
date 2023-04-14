@@ -5,7 +5,7 @@ import logging
 import sys
 import numpy as np
 from habitat.tasks.nav.nav import (
-    merge_sim_episode_config,
+#    merge_sim_episode_config,
     SimulatorTaskAction,
     MoveForwardAction,
     TurnLeftAction,

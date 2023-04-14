@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterator, List, Optional, Type, Union
 import habitat_sim as hsim
 import numpy as np
 from gym.spaces import Dict as SpaceDict
-from habitat.config import Config
+from habitat.config import DictConfig as Config
 from habitat.core.dataset import Dataset, Episode
 from habitat.core.embodied_task import EmbodiedTask
 from habitat.core.env import Env

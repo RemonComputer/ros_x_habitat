@@ -3,7 +3,7 @@ from typing import Any, List, Optional, Tuple
 import attr
 import numpy as np
 
-from habitat.config import Config
+from habitat.config import DictConfig as Config
 from habitat.core.dataset import Dataset, Episode
 from habitat.core.embodied_task import Measure
 from habitat.core.registry import registry

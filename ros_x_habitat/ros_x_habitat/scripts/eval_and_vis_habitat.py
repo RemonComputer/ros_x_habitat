@@ -64,7 +64,7 @@ def main():
             model_path=args.model_path,
             enable_physics=True,
         )
-    elif "SIMULATOR" in exp_config:
+    elif "simulator" in exp_config['habitat']:
         logger.info("Instantiating discrete simulator")
         evaluator = HabitatEvaluator(
             config_paths=args.task_config,
@@ -73,6 +73,7 @@ def main():
             enable_physics=False,
         )
     else:
+        # print(exp_config)
         logger.info("Simulator not properly specified")
         raise NotImplementedError
 

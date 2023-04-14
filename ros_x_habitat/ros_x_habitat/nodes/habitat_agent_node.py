@@ -13,7 +13,7 @@ import numpy as np
 import rospy
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
-from habitat.config import Config
+from habitat.config import DictConfig as Config
 from habitat.sims.habitat_simulator.actions import _DefaultHabitatSimActions
 from habitat_baselines.agents.ppo_agents import PPOAgent
 from message_filters import TimeSynchronizer

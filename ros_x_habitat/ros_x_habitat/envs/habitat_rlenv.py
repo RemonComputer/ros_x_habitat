@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import gym
 import numpy as np
-from habitat.config import Config
+from habitat.config import DictConfig
 from habitat.core.dataset import Dataset, Episode
 from habitat.core.env import Env
 from habitat.core.simulator import Observations
@@ -30,7 +30,7 @@ class HabitatRLEnv(gym.Env):
 
     def __init__(
         self,
-        config: Config,
+        config: DictConfig,
         dataset: Optional[Dataset] = None,
         enable_physics: Optional[bool] = False,
     ) -> None:
@@ -45,6 +45,8 @@ class HabitatRLEnv(gym.Env):
         if self.enable_physics:
             self._env = PhysicsEnv(config, dataset)
         else:
+            import habitat_sim
+            #print(str(habitat_sim.SensorType.COLOR))
             self._env = Env(config, dataset)
 
         self.observation_space = self._env.observation_space

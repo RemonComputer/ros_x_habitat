@@ -1,5 +1,5 @@
 import numpy as np
-from habitat.config import Config
+from habitat.config import DictConfig as Config
 from habitat.config.default import get_config
 from typing import List, Tuple, Dict
 from collections import defaultdict

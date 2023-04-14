@@ -3,7 +3,8 @@ import time
 from traceback import print_exc
 from typing import List, Tuple, Dict
 import numpy as np
-from habitat.config import Config
+from omegaconf import OmegaConf
+from habitat.config import DictConfig
 from habitat.utils.visualizations import maps
 from habitat.utils.visualizations.utils import observations_to_image
 from habitat_baselines.agents.ppo_agents import PPOAgent
@@ -20,7 +21,7 @@ from ros_x_habitat.utils.utils_visualization import (
 
 
 def get_default_config():
-    c = Config()
+    c = DictConfig()
     c.INPUT_TYPE = "blind"
     c.MODEL_PATH = "data/checkpoints/blind.pth"
     c.RESOLUTION = 256
@@ -53,9 +54,13 @@ class HabitatEvaluator(HabitatSimEvaluator):
         super().__init__(config_paths, input_type, model_path, enable_physics)
 
         # embed top-down map and heading sensor in config
-        self.config.defrost()
-        self.config.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
-        self.config.freeze()
+        #self.config.defrost()
+        OmegaConf.set_readonly(self.config, False)
+        self.config.habitat.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
+        import habitat_sim
+        # self.config.habitat.simulator.agents.AGENT_0.sim_sensors.rgb_sensor.type = habitat_sim.SensorType.COLOR
+        # self.config.freeze()
+        OmegaConf.set_readonly(self.config, True)
 
         # declare an agent instance
         self.agent = None
