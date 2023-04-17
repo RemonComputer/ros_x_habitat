@@ -19,8 +19,11 @@ setup(
                 ' simulator and ROS 2',
     license='CC-BY-4.0',
     tests_require=['pytest'],
+    package_data={'': ['*.py', '*/*.py', '*/*/*.py']},
+    include_package_data=True,
     entry_points={
         'console_scripts': [
+            'joy_to_habitat = ros_x_habitat.nodes.joy_controller:main',
         ],
     },
 )
