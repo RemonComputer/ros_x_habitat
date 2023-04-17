@@ -4,7 +4,7 @@
   <name>ros_x_habitat</name>
   <version>0.0.1</version>
   <description>A bridge interface between Habitat Reinforcement learning simulator and ROS 2</description>
-  <maintainer email="RemonComputer@gmail.com">remon</maintainer>
+  <maintainer email="RemonComputer@gmail.com">Remon Gabra</maintainer>
   <license>CC-BY-4.0</license>
 
   <build_depend>rclcpp</build_depend>
@@ -13,6 +13,7 @@
   <build_export_depend>std_msgs</build_export_depend>
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
   <exec_depend>python3-pandas</exec_depend>
   <exec_depend>python3-seaborn</exec_depend>
 
@@ -20,7 +21,6 @@
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
-
 
   <export>
     <build_type>ament_python</build_type>
