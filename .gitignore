@@ -83,3 +83,9 @@ pyspy_profiles/
 
 # Gazebo worlds
 worlds/
+
+# temp files
+.fuse_hidden*
+
+# ros ignore files
+COLCON_IGNORE
