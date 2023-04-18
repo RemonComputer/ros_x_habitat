@@ -2,22 +2,22 @@
 import argparse
 from threading import Condition, Lock
 
-# import numpy as np
+import numpy as np
 # import rospy
-# from cv_bridge import CvBridge
-# from geometry_msgs.msg import Twist
-# from habitat.config.default import get_config
-# from habitat.core.simulator import Observations
-# from ros_x_habitat.msg import PointGoalWithGPSCompass, DepthImage
-# from ros_x_habitat.srv import EvalEpisode, ResetAgent, GetAgentTime, Roam
-# from sensor_msgs.msg import Image, CameraInfo
-# from std_msgs.msg import Header, Int16
-# from ros_x_habitat.constants.constants import (
-#     EvalEpisodeSpecialIDs,
-#     NumericalMetrics,
-#     PACKAGE_NAME,
-#     ServiceNames,
-# )
+from cv_bridge import CvBridge
+from geometry_msgs.msg import Twist
+from habitat.config.default import get_config
+from habitat.core.simulator import Observations
+from ros_x_habitat_interfaces.msg import PointGoalWithGPSCompass, DepthImage
+from ros_x_habitat_interfaces.srv import EvalEpisode, ResetAgent, GetAgentTime, Roam
+from sensor_msgs.msg import Image, CameraInfo
+from std_msgs.msg import Header, Int16
+from ros_x_habitat.constants.constants import (
+    EvalEpisodeSpecialIDs,
+    NumericalMetrics,
+    PACKAGE_NAME,
+    ServiceNames,
+)
 # from ros_x_habitat.envs.habitat_eval_rlenv import HabitatEvalRLEnv
 # from ros_x_habitat.evaluators.habitat_sim_evaluator import HabitatSimEvaluator
 # import time
@@ -703,6 +703,7 @@ def main():
 
     # # run simulations
     # env_node.simulate()
+    print("Executed successfully 2")
     pass
 
 
