@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'joy_to_habitat = ros_x_habitat.nodes.joy_controller:main',
+            'habitat_env = ros_x_habitat.nodes.habitat_env_node:main',
         ],
     },
 )
