@@ -4,10 +4,12 @@ from threading import Condition, Lock
 
 import rclpy
 from rclpy.node import Node
-import numpy as np
-# import rospy
+from rcl_interfaces.msg import ParameterDescriptor
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
+
+import numpy as np
+# import rospy
 from habitat.config.default import get_config
 from habitat.core.simulator import Observations
 from ros_x_habitat_interfaces.msg import PointGoalWithGPSCompass, DepthImage
@@ -681,6 +683,25 @@ from ros_x_habitat.measures.top_down_map_for_roam import (
 class HabitatEnvNode(Node):
     def __init__(self):
         super().__init__('habitat_env')
+        # Describing and intializing the node paramaters
+        task_config_descriptor = ParameterDescriptor(
+            description='Path to Habitat env config file')
+        self.declare_parameter('task_config',
+                               'configs/pointnav_d_orignal.yaml',
+                               task_config_descriptor)
+        enable_physics_sim_descriptor = ParameterDescriptor(
+            description='If true, turn on dynamic simulation with Bullet')
+        self.declare_parameter('enable_physics_sim', False,
+                               enable_physics_sim_descriptor)
+        use_continuous_agent_descriptor = ParameterDescriptor(
+            description='If true, the agent would be one that produces '
+            'continuous velocities. Must be false if using discrete simulator')
+        self.declare_parameter('use_continuous_agent', False,
+                               use_continuous_agent_descriptor)
+        sensor_pub_rate_descriptor = ParameterDescriptor(
+            description='The rate at which the node publishes sensor readings')
+        self.declare_parameter('sensor_pub_rate', 20.0,
+                               sensor_pub_rate_descriptor)
 
 
 def main(args=None):
