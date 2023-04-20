@@ -9,6 +9,7 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 
 import numpy as np
+from omegaconf import OmegaConf
 # import rospy
 from habitat.config.default import get_config
 from habitat.core.simulator import Observations
@@ -75,7 +76,7 @@ from ros_x_habitat.measures.top_down_map_for_roam import (
 #         self.config.defrost()
 #         self.config.TASK.MEASUREMENTS.append("TOP_DOWN_MAP")
 #         self.config.freeze()
-#         add_top_down_map_for_roam_to_config(self.config)
+#         self.config = add_top_down_map_for_roam_to_config(self.config)
 
 #         # instantiate environment
 #         self.enable_physics_sim = enable_physics_sim
@@ -721,10 +722,13 @@ class HabitatEnvNode(Node):
             get_parameter_value().string_value
         self.config = get_config(task_config_value)
         # embed top-down map in config
-        self.config.defrost()
+        #self.config.defrost()
+        OmegaConf.set_readonly(self.config, False)
         self.config.habitat.task.measurements.append("top_down_map")
-        self.config.freeze()
-        add_top_down_map_for_roam_to_config(self.config)
+        # self.config.freeze()
+        OmegaConf.set_readonly(self.config, True)
+        self.config = add_top_down_map_for_roam_to_config(self.config)
+        print(self.config)
 
 #         # initialize node
 
