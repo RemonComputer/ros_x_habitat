@@ -1,6 +1,7 @@
 import os
 import unittest
 import numpy as np
+from omegaconf import OmegaConf
 from PIL import Image
 from ros_x_habitat.constants.constants import NumericalMetrics
 from ros_x_habitat.evaluators.habitat_evaluator import HabitatEvaluator
@@ -64,11 +65,13 @@ class TestHabitatEvaluatorDiscreteCase(unittest.TestCase):
         os.makedirs(
             name="videos/test_habitat_evaluator_discrete/one_episode/", exist_ok=True
         )
-        self.evaluator_discrete.config.defrost()
+        # self.evaluator_discrete.config.defrost()
+        OmegaConf.set_readonly(self.evaluator_discrete.config, False)
         self.evaluator_discrete.config.VIDEO_DIR = (
             "videos/test_habitat_evaluator_discrete/one_episode/"
         )
-        self.evaluator_discrete.config.freeze()
+        # self.evaluator_discrete.config.freeze()
+        OmegaConf.set_readonly(self.evaluator_discrete.config, True)
 
         episode_ids = ["3"]
         scene_ids = ["data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"]
@@ -82,11 +85,13 @@ class TestHabitatEvaluatorDiscreteCase(unittest.TestCase):
         os.makedirs(
             name="videos/test_habitat_evaluator_discrete/two_episodes/", exist_ok=True
         )
-        self.evaluator_discrete.config.defrost()
+        # self.evaluator_discrete.config.defrost()
+        OmegaConf.set_readonly(self.evaluator_discrete.config, False)
         self.evaluator_discrete.config.VIDEO_DIR = (
             "videos/test_habitat_evaluator_discrete/two_episodes/"
         )
-        self.evaluator_discrete.config.freeze()
+        # self.evaluator_discrete.config.freeze()
+        OmegaConf.set_readonly(self.evaluator_discrete.config, True)
 
         episode_ids = ["0", "4"]
         scene_ids = [

@@ -2,6 +2,7 @@ from typing import Any, List, Optional, Tuple
 
 import attr
 import numpy as np
+from omegaconf import OmegaConf
 
 from habitat.config import DictConfig as Config
 from habitat.core.dataset import Dataset, Episode
@@ -27,14 +28,28 @@ def add_top_down_map_for_roam_to_config(config):
     r"""
     Add top-down-map to the given env config as a measurement.
     """
-    config.defrost()
-    config.TASK.MEASUREMENTS.append("TOP_DOWN_MAP_FOR_ROAM")
-    config.TASK.TOP_DOWN_MAP_FOR_ROAM = config.TASK.TOP_DOWN_MAP.clone()
-    config.TASK.TOP_DOWN_MAP_FOR_ROAM.DRAW_GOAL_AABBS = False
-    config.TASK.TOP_DOWN_MAP_FOR_ROAM.DRAW_GOAL_POSITIONS = False
-    config.TASK.TOP_DOWN_MAP_FOR_ROAM.DRAW_SHORTEST_PATH = False
-    config.TASK.TOP_DOWN_MAP_FOR_ROAM.TYPE = "TopDownMapForRoam"
-    config.freeze()
+    # config.defrost()
+    # OmegaConf.set_readonly(config, False)
+    dict_obj = OmegaConf.to_container(config)
+    dict_obj['habitat']['task']['measurements'].append("top_down_map_for_roam")
+    # config.habitat.task.top_down_map_for_roam = config.task.top_down_map.clone()
+    # config.habitat.task.top_down_map_for_roam.draw_goal_aabbs = False
+    # config.habitat.task.top_down_map_for_roam.draw_goal_positions = False
+    # config.habitat.task.top_down_map_for_roam.draw_shortest_path = False
+    # config.habitat.task.top_down_map_for_roam.type = "TopDownMapForRoam"
+    # config.habitat.task.append('top_down_map_for_roam')
+    dict_obj['habitat']['task']['top_down_map_for_roam'] = {
+        'draw_goal_aabbs': False,
+        'draw_goal_positions': False,
+        'draw_shortest_path': False,
+        'type': 'TopDownMapForRoam',
+    }
+    # config.freeze()
+    # OmegaConf.set_readonly(config, True)
+    new_config = OmegaConf.create(dict_obj)
+    return new_config
+
+
 
 
 @registry.register_measure
