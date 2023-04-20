@@ -24,6 +24,7 @@
   <exec_depend>python3-pandas</exec_depend>
   <exec_depend>python3-seaborn</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
   <!-- Launch files dependencies-->
   <exec_depend>joy</exec_depend>
   <exec_depend>image_view</exec_depend>
