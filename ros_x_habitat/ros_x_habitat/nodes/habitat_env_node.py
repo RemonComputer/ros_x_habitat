@@ -703,6 +703,24 @@ class HabitatEnvNode(Node):
         self.declare_parameter('sensor_pub_rate', 20.0,
                                sensor_pub_rate_descriptor)
 
+    def on_exit_generate_video(self):
+        """Make video of the current episode, if video production is turned
+        on.
+        """
+        self.get_logger().info("Shutdown hook called...")
+        # if self.make_video:
+        #     generate_video(
+        #         video_option=self.config.VIDEO_OPTION,
+        #         video_dir=self.config.VIDEO_DIR,
+        #         images=self.observations_per_episode,
+        #         episode_id="fake_episode_id",
+        #         scene_id="fake_scene_id",
+        #         agent_seed=0,
+        #         checkpoint_idx=0,
+        #         metrics={},
+        #         tb_writer=None,
+        #     )
+
 
 def main(args=None):
     # parse input arguments
@@ -737,14 +755,20 @@ def main(args=None):
     rclpy.init(args=args)
 
     habitat_env = HabitatEnvNode()
-
-    rclpy.spin(habitat_env)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    habitat_env.destroy_node()
-    rclpy.shutdown()
+    # Adding a shutdown callback
+    rclpy.get_default_context().on_shutdown(habitat_env.on_exit_generate_video)
+    # Catching the keyboard interrupt to execute the shutdown callback
+    try:
+        rclpy.spin(habitat_env)
+    except KeyboardInterrupt:
+        print("Keyboard interrupt")
+    finally:
+        habitat_env.on_exit_generate_video()
+        # Destroy the node explicitly
+        # (optional - otherwise it will be done automatically
+        # when the garbage collector destroys the node object)
+        habitat_env.destroy_node()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":
