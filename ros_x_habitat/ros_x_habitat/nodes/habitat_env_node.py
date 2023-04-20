@@ -2,6 +2,8 @@
 import argparse
 from threading import Condition, Lock
 
+import rclpy
+from rclpy.node import Node
 import numpy as np
 # import rospy
 from cv_bridge import CvBridge
@@ -676,7 +678,12 @@ from ros_x_habitat.measures.top_down_map_for_roam import (
 #             )
 
 
-def main():
+class HabitatEnvNode(Node):
+    def __init__(self):
+        super().__init__('habitat_env')
+
+
+def main(args=None):
     # parse input arguments
     # parser = argparse.ArgumentParser()
     # parser.add_argument("--node-name", type=str, default="env_node")
@@ -703,8 +710,20 @@ def main():
 
     # # run simulations
     # env_node.simulate()
-    print("Executed successfully 2")
-    pass
+
+    print("Starting the habitat_env node...")
+
+    rclpy.init(args=args)
+
+    habitat_env = HabitatEnvNode()
+
+    rclpy.spin(habitat_env)
+
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
+    habitat_env.destroy_node()
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":
