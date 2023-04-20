@@ -24,6 +24,26 @@
   <exec_depend>python3-pandas</exec_depend>
   <exec_depend>python3-seaborn</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
+  <!-- Launch files dependencies-->
+  <exec_depend>joy</exec_depend>
+  <exec_depend>image_view</exec_depend>
+  <exec_depend>depthimage_to_laserscan</exec_depend>
+  <exec_depend>tf_transformations</exec_depend>
+  <exec_depend>rtabmap_ros</exec_depend>
+  <exec_depend>nav2_amcl</exec_depend>
+  <!-- nav2_bt_navigator: replaces move_base, TODO: you might need to remove the config file of move base 
+  and reiterate on packages-->
+  <exec_depend>nav2_bt_navigator</exec_depend>                           
+  <exec_depend>rviz2</exec_depend>
+  <!-- turtlebot3_navigation2: replaces turtlebot3_navigation -->
+  <exec_depend>turtlebot3_navigation2</exec_depend>                      
+  <!-- laser_scan_matcher: unsupported -->
+  <!-- hector_geotiff: unsupported
+  hector_slam_launch: unsupported
+  hector_mapping: unsupported
+  nodelet: unsupported
+  rosservice: unsupported
+  hector_trajectory_server: unsupported -->
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
