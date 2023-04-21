@@ -703,9 +703,16 @@ class HabitatEnvNode(Node):
             description='The rate at which the node publishes sensor readings')
         self.declare_parameter('sensor_pub_rate', 20.0,
                                sensor_pub_rate_descriptor)
+        # set up logger
+        self.logger = utils_logging.setup_logger("habitat_env_node")
         # Executing initializations subroutines
         self.precondition_check()
         self.setup_environment_config()
+        self.setup_habitat_environment()
+        self.setup_multithreading_stuff()
+        self.setup_services()
+        self.setup_publishers_and_subscriber()
+        self.logger.info("env initialized")
 
     def precondition_check(self):
         # precondition check
@@ -713,6 +720,8 @@ class HabitatEnvNode(Node):
             get_parameter_value().bool_value
         enable_physics_sim_value = self.get_parameter('enable_physics_sim').\
             get_parameter_value().bool_value
+        self.enable_physics_sim = enable_physics_sim_value
+        self.use_continuous_agent = continous_agent_value
         if continous_agent_value:
             assert enable_physics_sim_value
 
@@ -730,164 +739,194 @@ class HabitatEnvNode(Node):
         self.config = add_top_down_map_for_roam_to_config(self.config)
         print(self.config)
 
-#         # initialize node
+    def setup_habitat_environment(self) -> None:
+        enable_physics_sim_value = self.get_parameter('enable_physics_sim').\
+            get_parameter_value().bool_value
+        if enable_physics_sim_value:
+            HabitatSimEvaluator.overwrite_simulator_config(self.config)
+        # define environment
+        self.env = HabitatEvalRLEnv(
+            config=self.config, enable_physics=enable_physics_sim_value
+        )
+        #         # instantiate environment
+        #         self.enable_physics_sim = enable_physics_sim
+        #         self.use_continuous_agent = use_continuous_agent
+        #         # overwrite env config if physics enabled
+        #         if self.enable_physics_sim:
+        #             HabitatSimEvaluator.overwrite_simulator_config(self.config)
+        #         # define environment
+        #         self.env = HabitatEvalRLEnv(
+        #             config=self.config, enable_physics=self.enable_physics_sim
+        #         )
 
-#         # instantiate environment
-#         self.enable_physics_sim = enable_physics_sim
-#         self.use_continuous_agent = use_continuous_agent
-#         # overwrite env config if physics enabled
-#         if self.enable_physics_sim:
-#             HabitatSimEvaluator.overwrite_simulator_config(self.config)
-#         # define environment
-#         self.env = HabitatEvalRLEnv(
-#             config=self.config, enable_physics=self.enable_physics_sim
-#         )
+    def setup_multithreading_stuff(self) -> None:
+        # shutdown is set to true by eval_episode() to indicate the
+        # evaluator wants the node to shutdown
+        self.shutdown_lock = Lock()
+        with self.shutdown_lock:
+            self.shutdown = False
 
-#         # shutdown is set to true by eval_episode() to indicate the
-#         # evaluator wants the node to shutdown
-#         self.shutdown_lock = Lock()
-#         with self.shutdown_lock:
-#             self.shutdown = False
+        # enable_eval is set to true by eval_episode() to allow
+        # publish_sensor_observations() and step() to run
+        # enable_eval is set to false in one of the three conditions:
+        # 1) by publish_and_step_for_eval() after an episode is done;
+        # 2) by publish_and_step_for_roam() after a roaming session
+        #    is done;
+        # 3) by main() after all episodes have been evaluated.
+        # all_episodes_evaluated is set to True by main() to indicate
+        # no more episodes left to evaluate. eval_episodes() then signals
+        # back to evaluator, and set it to False again for re-use
+        self.all_episodes_evaluated = False
+        self.enable_eval = False
+        self.enable_eval_cv = Condition()
 
-#         # enable_eval is set to true by eval_episode() to allow
-#         # publish_sensor_observations() and step() to run
-#         # enable_eval is set to false in one of the three conditions:
-#         # 1) by publish_and_step_for_eval() after an episode is done;
-#         # 2) by publish_and_step_for_roam() after a roaming session
-#         #    is done;
-#         # 3) by main() after all episodes have been evaluated.
-#         # all_episodes_evaluated is set to True by main() to indicate
-#         # no more episodes left to evaluate. eval_episodes() then signals
-#         # back to evaluator, and set it to False again for re-use
-#         self.all_episodes_evaluated = False
-#         self.enable_eval = False
-#         self.enable_eval_cv = Condition()
+        # enable_reset is set to true by eval_episode() or roam() to allow
+        # reset() to run
+        # enable_reset is set to false by reset() after simulator reset
+        self.enable_reset_cv = Condition()
+        with self.enable_reset_cv:
+            self.enable_reset = False
+            self.enable_roam = False
+            self.episode_id_last = None
+            self.scene_id_last = None
 
-#         # enable_reset is set to true by eval_episode() or roam() to allow
-#         # reset() to run
-#         # enable_reset is set to false by reset() after simulator reset
-#         self.enable_reset_cv = Condition()
-#         with self.enable_reset_cv:
-#             self.enable_reset = False
-#             self.enable_roam = False
-#             self.episode_id_last = None
-#             self.scene_id_last = None
+        # agent velocities/action and variables to keep things synchronized
+        self.command_cv = Condition()
+        with self.command_cv:
+            if self.use_continuous_agent:
+                self.linear_vel = None
+                self.angular_vel = None
+            else:
+                self.action = None
+            self.count_steps = None
+            self.new_command_published = False
 
-#         # agent velocities/action and variables to keep things synchronized
-#         self.command_cv = Condition()
-#         with self.command_cv:
-#             if self.use_continuous_agent:
-#                 self.linear_vel = None
-#                 self.angular_vel = None
-#             else:
-#                 self.action = None
-#             self.count_steps = None
-#             self.new_command_published = False
+        self.observations = None
 
-#         self.observations = None
+        # timing variables and guarding lock
+        self.timing_lock = Lock()
+        with self.timing_lock:
+            self.t_reset_elapsed = None
+            self.t_sim_elapsed = None
 
-#         # timing variables and guarding lock
-#         self.timing_lock = Lock()
-#         with self.timing_lock:
-#             self.t_reset_elapsed = None
-#             self.t_sim_elapsed = None
+        # video production variables
+        self.make_video = False
+        self.observations_per_episode = []
+        self.video_frame_counter = 0
+        self.video_frame_period = 1  # NOTE: frame rate defined as x
+                                     # steps/frame
 
-#         # video production variables
-#         self.make_video = False
-#         self.observations_per_episode = []
-#         self.video_frame_counter = 0
-#         self.video_frame_period = 1  # NOTE: frame rate defined as x steps/frame
 
-#         # set up logger
-#         self.logger = utils_logging.setup_logger(self.node_name)
+    def setup_services(self) -> None:
+        #         # establish evaluation service server
+        #         self.eval_service = rospy.Service(
+        #             f"{PACKAGE_NAME}/{node_name}/{ServiceNames.EVAL_EPISODE}",
+        #             EvalEpisode,
+        #             self.eval_episode,
+        #         )
+        self.eval_service = self.create_service(
+            EvalEpisode, f'{ServiceNames.EVAL_EPISODE}', self.eval_episode)
 
-#         # establish evaluation service server
-#         self.eval_service = rospy.Service(
-#             f"{PACKAGE_NAME}/{node_name}/{ServiceNames.EVAL_EPISODE}",
-#             EvalEpisode,
-#             self.eval_episode,
-#         )
+        # establish roam service server
+        #         self.roam_service = rospy.Service(
+        #             f"{PACKAGE_NAME}/{node_name}/{ServiceNames.ROAM}", Roam, self.roam
+        #         )
+        self.roam_service = self.create_service(
+            Roam, f'{ServiceNames.ROAM}', self.roam)
 
-#         # establish roam service server
-#         self.roam_service = rospy.Service(
-#             f"{PACKAGE_NAME}/{node_name}/{ServiceNames.ROAM}", Roam, self.roam
-#         )
+    def setup_publishers_and_subscriber(self) -> None:
+        # define the max rate at which we publish sensor readings
+        # self.pub_rate = float(pub_rate)
 
-#         # define the max rate at which we publish sensor readings
-#         self.pub_rate = float(pub_rate)
+        # environment publish and subscribe queue size
+        # TODO: make them configurable by constructor argument
+        self.sub_queue_size = 10
+        self.pub_queue_size = 10
 
-#         # environment publish and subscribe queue size
-#         # TODO: make them configurable by constructor argument
-#         self.sub_queue_size = 10
-#         self.pub_queue_size = 10
+        # publish to sensor topics
+        # we create one topic for each of RGB, Depth and GPS+Compass
+        # sensor
+        if "rgb_sensor" in self.config.habitat.simulator.agent_0.sim_sensors:
+            # self.pub_rgb = rospy.Publisher("rgb", Image, queue_size=self.pub_queue_size)
+            self.pub_rgb = self.create_publisher(Image, 'rgb',
+                                                 self.pub_queue_size)
+        if "depth_sensor" in self.config.habitat.simulator.agent_0.sim_sensors:
+            if self.use_continuous_agent:
+                # if we are using a ROS-based agent, we publish depth images
+                # in type Image
+                # self.pub_depth = rospy.Publisher(
+                #     "depth", Image, queue_size=self.pub_queue_size
+                # )
+                self.pub_depth = self.create_publisher(Image, 'depth',
+                                                       self.pub_queue_size)
+                # also publish depth camera info
+                # self.pub_camera_info = rospy.Publisher(
+                #     "camera_info", CameraInfo, queue_size=self.pub_queue_size
+                # )
+                self.pub_camera_info = self.create_publisher(
+                    CameraInfo, 'camera_info', self.pub_queue_size)
+            else:
+                # otherwise, we publish in type DepthImage to preserve as much
+                # accuracy as possible
+                # self.pub_depth = rospy.Publisher(
+                #     "depth", DepthImage, queue_size=self.pub_queue_size
+                # )
+                self.pub_depth = self.create_publisher(
+                    DepthImage, 'depth', self.pub_queue_size)
+        if "pointgoal_with_gps_compass_sensor" in self.config.\
+                habitat.task.sensors:
+            # self.pub_pointgoal_with_gps_compass = rospy.Publisher(
+            #     "pointgoal_with_gps_compass",
+            #     PointGoalWithGPSCompass,
+            #     queue_size=self.pub_queue_size
+            # )
+            self.pub_pointgoal_with_gps_compass = self.create_publisher(
+                    PointGoalWithGPSCompass, 'pointgoal_with_gps_compass',
+                    self.pub_queue_size)
 
-#         # publish to sensor topics
-#         # we create one topic for each of RGB, Depth and GPS+Compass
-#         # sensor
-#         if "RGB_SENSOR" in self.config.SIMULATOR.AGENT_0.SENSORS:
-#             self.pub_rgb = rospy.Publisher("rgb", Image, queue_size=self.pub_queue_size)
-#         if "DEPTH_SENSOR" in self.config.SIMULATOR.AGENT_0.SENSORS:
-#             if self.use_continuous_agent:
-#                 # if we are using a ROS-based agent, we publish depth images
-#                 # in type Image
-#                 self.pub_depth = rospy.Publisher(
-#                     "depth", Image, queue_size=self.pub_queue_size
-#                 )
-#                 # also publish depth camera info
-#                 self.pub_camera_info = rospy.Publisher(
-#                     "camera_info", CameraInfo, queue_size=self.pub_queue_size
-#                 )
-#             else:
-#                 # otherwise, we publish in type DepthImage to preserve as much
-#                 # accuracy as possible
-#                 self.pub_depth = rospy.Publisher(
-#                     "depth", DepthImage, queue_size=self.pub_queue_size
-#                 )
-#         if "POINTGOAL_WITH_GPS_COMPASS_SENSOR" in self.config.TASK.SENSORS:
-#             self.pub_pointgoal_with_gps_compass = rospy.Publisher(
-#                 "pointgoal_with_gps_compass",
-#                 PointGoalWithGPSCompass,
-#                 queue_size=self.pub_queue_size
-#             )
+        # subscribe from command topics
+        if self.use_continuous_agent:
+            # self.sub = rospy.Subscriber(
+            #     "cmd_vel", Twist, self.callback, queue_size=self.sub_queue_size
+            # )
+            self.sub = self.create_subscription(Twist, 'cmd_vel',
+                                                self.callback,
+                                                self.sub_queue_size)
+        else:
+            # self.sub = rospy.Subscriber(
+            #     "action", Int16, self.callback, queue_size=self.sub_queue_size
+            # )
+            self.sub = self.create_subscription(Int16, 'action',
+                                                self.callback,
+                                                self.sub_queue_size)
 
-#         # subscribe from command topics
-#         if self.use_continuous_agent:
-#             self.sub = rospy.Subscriber(
-#                 "cmd_vel", Twist, self.callback, queue_size=self.sub_queue_size
-#             )
-#         else:
-#             self.sub = rospy.Subscriber(
-#                 "action", Int16, self.callback, queue_size=self.sub_queue_size
-#             )
-
-#         # wait until connections with the agent is established
-#         self.logger.info("env making sure agent is subscribed to sensor topics...")
-#         while (
-#             self.pub_rgb.get_num_connections() == 0
-#             or self.pub_depth.get_num_connections() == 0
-#             or self.pub_pointgoal_with_gps_compass.get_num_connections() == 0
-#         ):
-#             pass
-
-#         self.logger.info("env initialized")
+        # wait until connections with the agent is established
+        self.logger.info(
+            "env making sure agent is subscribed to sensor topics...")
+        while (
+            self.pub_rgb.get_num_connections() == 0
+            or self.pub_depth.get_num_connections() == 0
+            or self.pub_pointgoal_with_gps_compass.get_num_connections() == 0
+        ):
+            pass
 
     def on_exit_generate_video(self):
         """Make video of the current episode, if video production is turned
         on.
         """
         self.get_logger().info("Shutdown hook called...")
-        # if self.make_video:
-        #     generate_video(
-        #         video_option=self.config.VIDEO_OPTION,
-        #         video_dir=self.config.VIDEO_DIR,
-        #         images=self.observations_per_episode,
-        #         episode_id="fake_episode_id",
-        #         scene_id="fake_scene_id",
-        #         agent_seed=0,
-        #         checkpoint_idx=0,
-        #         metrics={},
-        #         tb_writer=None,
-        #     )
+        if self.make_video:
+            generate_video(
+                video_option=self.config.VIDEO_OPTION,
+                video_dir=self.config.VIDEO_DIR,
+                images=self.observations_per_episode,
+                episode_id="fake_episode_id",
+                scene_id="fake_scene_id",
+                agent_seed=0,
+                checkpoint_idx=0,
+                metrics={},
+                tb_writer=None,
+            )
 
 
 def main(args=None):
