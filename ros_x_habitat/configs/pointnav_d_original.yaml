@@ -1,6 +1,11 @@
 habitat:
+  seed: 7
   environment:
     max_episode_steps: 500
+    iterator_options:
+      shuffle: False
+      group_by_scene: True
+      cycle: False
   simulator:
     agents:
       agent_0:
@@ -8,6 +13,7 @@ habitat:
           rgb_sensor:
             width: 256
             height: 256
+            type: color_sensor
           depth_sensor:
             width: 256
             height: 256
@@ -46,4 +52,10 @@ habitat:
     measurements: ['distance_to_goal', 'success', 'spl']
     success:
       success_distance: 0.2
+  dataset:
+    type: PointNav-v1
+    split: test
+    data_path: /mnt/D/MyProjects/Domestic-Robot/ros_ws/src/ros_x_habitat/ros_x_habitat/data/datasets/pointnav/mp3d/v1/{split}/{split}.json.gz
+    scenes_dir: /mnt/D/MyProjects/Domestic-Robot/ros_ws/src/ros_x_habitat/ros_x_habitat/data/scene_datasets/mp3d/
+    content_scenes: ["2t7WUuJeko7"]
 

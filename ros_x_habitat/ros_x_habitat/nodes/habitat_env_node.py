@@ -11,6 +11,9 @@ from geometry_msgs.msg import Twist
 import numpy as np
 from omegaconf import OmegaConf
 # import rospy
+import habitat_sim
+import habitat.core.simulator
+from habitat.core.registry import registry
 from habitat.config.default import get_config
 from habitat.core.simulator import Observations
 from ros_x_habitat_interfaces.msg import PointGoalWithGPSCompass, DepthImage
@@ -703,6 +706,8 @@ class HabitatEnvNode(Node):
             description='The rate at which the node publishes sensor readings')
         self.declare_parameter('sensor_pub_rate', 20.0,
                                sensor_pub_rate_descriptor)
+        # print(habitat.core.simulator.SensorSuite.sensors)
+        # registry.
         # set up logger
         self.logger = utils_logging.setup_logger("habitat_env_node")
         # Executing initializations subroutines
@@ -737,7 +742,7 @@ class HabitatEnvNode(Node):
         # self.config.freeze()
         OmegaConf.set_readonly(self.config, True)
         self.config = add_top_down_map_for_roam_to_config(self.config)
-        print(self.config)
+        # print(self.config)
 
     def setup_habitat_environment(self) -> None:
         enable_physics_sim_value = self.get_parameter('enable_physics_sim').\
