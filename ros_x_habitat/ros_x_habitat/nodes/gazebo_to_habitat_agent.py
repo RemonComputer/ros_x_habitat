@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import argparse
 from threading import Lock
 import numpy as np
@@ -6,6 +7,7 @@ import cv2
 from PIL import Image as PILImage
 # import rospy
 import rclpy
+from rclpy.node import Node
 import message_filters
 from cv_bridge import CvBridge
 from nav_msgs.msg import Odometry
@@ -483,7 +485,7 @@ from ros_x_habitat.utils import utils_logging
 #             pose.orientation.z = self.curr_rotation[2]
 #             pose.orientation.w = self.curr_rotation[3]
 #         return pose
-    
+
 #     def spin_until_shutdown(self):
 #         r"""
 #         Let the node spin until shutdown.
@@ -491,52 +493,58 @@ from ros_x_habitat.utils import utils_logging
 #         rospy.spin()
 
 
-def main():
-    # parse input arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--node-name",
-        default="gazebo_to_habitat_agent",
-        type=str
-    )
-    parser.add_argument(
-        "--gazebo-rgb-topic-name",
-        default="camera/rgb/image_raw",
-        type=str
-    )
-    parser.add_argument(
-        "--gazebo-depth-topic-name",
-        default="camera/depth/image_raw",
-        type=str
-    )
-    parser.add_argument(
-        "--gazebo-odom-topic-name",
-        default="odom",
-        type=str
-    )
-    parser.add_argument(
-        "--move-base-goal-topic-name",
-        default="/move_base_simple/goal",
-        type=str
-    )
-    parser.add_argument(
-        "--fetch-goal-from-move-base",
-        default=False,
-        action="store_true"
-    )
-    parser.add_argument(
-        "--pointgoal-location",
-        nargs="+",
-        type=float
-    )
-    args = parser.parse_args()
+class GazeboToHabitatAgent(Node):
+    def __init__(self) -> None:
+        super().__init__('gazebo_to_habitat_agent')
+        self.get_logger().info('Node executed successfully...')
 
-    # if the user is not providing pointgoal location, use the origin
-    if args.pointgoal_location is None:
-        pointgoal_list = [0.0, 0.0, 0.0]
-    else:
-        pointgoal_list = args.pointgoal_location
-    
+
+def main(args=None):
+    # parse input arguments
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument(
+    #     "--node-name",
+    #     default="gazebo_to_habitat_agent",
+    #     type=str
+    # )
+    # parser.add_argument(
+    #     "--gazebo-rgb-topic-name",
+    #     default="camera/rgb/image_raw",
+    #     type=str
+    # )
+    # parser.add_argument(
+    #     "--gazebo-depth-topic-name",
+    #     default="camera/depth/image_raw",
+    #     type=str
+    # )
+    # parser.add_argument(
+    #     "--gazebo-odom-topic-name",
+    #     default="odom",
+    #     type=str
+    # )
+    # parser.add_argument(
+    #     "--move-base-goal-topic-name",
+    #     default="/move_base_simple/goal",
+    #     type=str
+    # )
+    # parser.add_argument(
+    #     "--fetch-goal-from-move-base",
+    #     default=False,
+    #     action="store_true"
+    # )
+    # parser.add_argument(
+    #     "--pointgoal-location",
+    #     nargs="+",
+    #     type=float
+    # )
+    # args = parser.parse_args()
+
+    # # if the user is not providing pointgoal location, use the origin
+    # if args.pointgoal_location is None:
+    #     pointgoal_list = [0.0, 0.0, 0.0]
+    # else:
+    #     pointgoal_list = args.pointgoal_location
+
     # instantiate the bridge
     # bridge = GazeboToHabitatAgent(
     #     node_name=args.node_name,
@@ -550,7 +558,17 @@ def main():
 
     # # spins until receiving the shutdown signal
     # bridge.spin_until_shutdown()
-    print('node executed successfully...')
+
+    rclpy.init(args=args)
+
+    gazebo_to_habitat_agent = GazeboToHabitatAgent()
+    rclpy.spin(gazebo_to_habitat_agent)
+
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
+    gazebo_to_habitat_agent.destroy_node()
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":
