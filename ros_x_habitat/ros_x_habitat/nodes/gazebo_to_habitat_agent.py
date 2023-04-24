@@ -8,6 +8,7 @@ from PIL import Image as PILImage
 # import rospy
 import rclpy
 from rclpy.node import Node
+from rcl_interfaces.msg import ParameterDescriptor
 import message_filters
 from cv_bridge import CvBridge
 from nav_msgs.msg import Odometry
@@ -496,6 +497,20 @@ from ros_x_habitat.utils import utils_logging
 class GazeboToHabitatAgent(Node):
     def __init__(self) -> None:
         super().__init__('gazebo_to_habitat_agent')
+        # Declaring the parameters
+        fetch_goal_from_move_base_descriptor = ParameterDescriptor(
+            description='True if we fetch the goal position from move_base_'
+            'topic: /move_base_simple/goal')
+        self.declare_parameter('fetch_goal_from_move_base',
+                               False,
+                               fetch_goal_from_move_base_descriptor)
+        final_pointgoal_pos_descriptor = ParameterDescriptor(
+            description='goal location of navigation, measured in the world'
+            'frame. If `fetch_goal_from_move_base` is True, this position is '
+            'ignored')
+        self.declare_parameter('final_pointgoal_pos',
+                               [0.0, 0.0, 0.0],
+                               final_pointgoal_pos_descriptor)
         self.get_logger().info('Node executed successfully...')
 
 
