@@ -30,7 +30,9 @@ setup(
             'ptgoal_with_gps_compass_dummy_subscriber = ros_x_habitat.nodes.'
                 'dummy_ptgoal_with_gps_compass_subscriber:main',
             'gazebo_to_habitat_agent = ros_x_habitat.nodes'
-                '.gazebo_to_habitat_agent:main'
+                '.gazebo_to_habitat_agent:main',
+            'habitat_agent_to_gazebo = ros_x_habitat.nodes'
+                '.habitat_agent_to_gazebo:main',
         ],
     },
 )
