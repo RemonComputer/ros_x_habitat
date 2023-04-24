@@ -29,6 +29,8 @@ setup(
             'habitat_env = ros_x_habitat.nodes.habitat_env_node:main',
             'ptgoal_with_gps_compass_dummy_subscriber = ros_x_habitat.nodes.'
                 'dummy_ptgoal_with_gps_compass_subscriber:main',
+            'gazebo_to_habitat_agent = ros_x_habitat.nodes'
+                '.gazebo_to_habitat_agent:main'
         ],
     },
 )
