@@ -21,6 +21,7 @@ from sensor_msgs.msg import Image
 #from tf2_ros import euler_from_quaternion, rotation_matrix
 from tf_transformations import euler_from_quaternion, rotation_matrix
 from habitat.tasks.utils import cartesian_to_polar
+# You might need to replace the DepthImage Message with sensor_msgs/msg/PointCloud2
 from ros_x_habitat_interfaces.msg import PointGoalWithGPSCompass, DepthImage
 from ros_x_habitat_interfaces.srv import GetAgentPose
 from ros_x_habitat.constants.constants import PACKAGE_NAME, ServiceNames
