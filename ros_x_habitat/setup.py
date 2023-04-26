@@ -33,6 +33,7 @@ setup(
                 '.gazebo_to_habitat_agent:main',
             'habitat_agent_to_gazebo = ros_x_habitat.nodes'
                 '.habitat_agent_to_gazebo:main',
+            'habitat_agent = ros_x_habitat.nodes.habitat_agent_node:main',
         ],
     },
 )
