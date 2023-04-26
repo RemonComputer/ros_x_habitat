@@ -15,6 +15,7 @@ from omegaconf import OmegaConf
 # import rospy
 import rclpy
 from rclpy.node import Node
+from rcl_interfaces.msg import ParameterDescriptor
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 from habitat.config import DictConfig as Config
@@ -363,6 +364,24 @@ class HabitatAgentNode(Node):
     """
     def __init__(self) -> None:
         super().__init__('habitat_agent')
+        # Declaring the parameter
+        input_type_descriptor = ParameterDescriptor(
+            description='The type of inputs to the agent possible values are:'
+            ' ["blind", "rgb", "depth", "rgbd"]')
+        self.declare_parameter('input_type',
+                               "blind",
+                               input_type_descriptor)
+        model_path_descriptor = ParameterDescriptor(
+            description='The habitat agent model path to load')
+        self.declare_parameter('model_path',
+                               "",
+                               model_path_descriptor)
+        sensor_pub_rate_descriptor = ParameterDescriptor(
+            description='the rate at which Gazebo (or some other ROS-based '
+            'sim) publishes sensor observations')
+        self.declare_parameter('sensor_pub_rate',
+                               10.0,
+                               sensor_pub_rate_descriptor)
         self.get_logger().info('Habitat Agent Node Starting...')
         pass
 
