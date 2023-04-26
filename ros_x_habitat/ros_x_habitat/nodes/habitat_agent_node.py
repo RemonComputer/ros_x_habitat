@@ -355,7 +355,19 @@ def get_default_config():
 #             rospy.signal_shutdown("received request to shut down")
 
 
-def main():
+class HabitatAgentNode(Node):
+    r"""
+    A class to represent a ROS node with a Habitat agent inside.
+    The node subscribes to sensor topics, and publishes either
+    discrete actions or continuous velocities to command topics.
+    """
+    def __init__(self) -> None:
+        super().__init__('habitat_agent')
+        self.get_logger().info('Habitat Agent Node Starting...')
+        pass
+
+
+def main(args=None):
     # parse input arguments
     # parser = argparse.ArgumentParser()
     # parser.add_argument("--node-name", default="agent_node", type=str)
@@ -384,7 +396,18 @@ def main():
 
     # # spins until receiving the shutdown signal
     # agent_node.spin_until_shutdown()
-    print('Script executed successfully')
+
+    rclpy.init(args=args)
+
+    habitat_agent_node = HabitatAgentNode()
+    rclpy.spin(habitat_agent_node)
+
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
+    habitat_agent_node.destroy_node()
+    rclpy.shutdown()
+    # print('Script executed successfully')
 
 
 if __name__ == "__main__":
