@@ -9,13 +9,14 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 
 import numpy as np
-from omegaconf import OmegaConf
+# from omegaconf import OmegaConf
 # import rospy
 import habitat_sim
 import habitat.core.simulator
 from habitat.core.registry import registry
 from habitat.config.default import get_config
 from habitat.core.simulator import Observations
+from habitat.config import read_write
 from ros_x_habitat_interfaces.msg import PointGoalWithGPSCompass, DepthImage
 from ros_x_habitat_interfaces.srv import EvalEpisode, ResetAgent, GetAgentTime, Roam
 from sensor_msgs.msg import Image, CameraInfo
@@ -737,11 +738,14 @@ class HabitatEnvNode(Node):
         self.config = get_config(task_config_value)
         # embed top-down map in config
         #self.config.defrost()
-        OmegaConf.set_readonly(self.config, False)
-        self.config.habitat.task.measurements.append("top_down_map")
+        # OmegaConf.set_readonly(self.config, False)
+        with read_write(self.config):
+            # self.config.habitat.task.measurements.append("top_down_map")
+            # self.config.habitat.task.measurements.top_down_map = ''
+            pass
         # self.config.freeze()
-        OmegaConf.set_readonly(self.config, True)
-        self.config = add_top_down_map_for_roam_to_config(self.config)
+        # OmegaConf.set_readonly(self.config, True)
+        # self.config = add_top_down_map_for_roam_to_config(self.config)
         # print(self.config)
 
     def setup_habitat_environment(self) -> None:
@@ -821,7 +825,6 @@ class HabitatEnvNode(Node):
         self.video_frame_period = 1  # NOTE: frame rate defined as x
                                      # steps/frame
 
-
     def setup_services(self) -> None:
         #         # establish evaluation service server
         #         self.eval_service = rospy.Service(
@@ -851,11 +854,11 @@ class HabitatEnvNode(Node):
         # publish to sensor topics
         # we create one topic for each of RGB, Depth and GPS+Compass
         # sensor
-        if "rgb_sensor" in self.config.habitat.simulator.agent_0.sim_sensors:
+        if "rgb_sensor" in self.config.habitat.simulator.main_agent.sim_sensors:
             # self.pub_rgb = rospy.Publisher("rgb", Image, queue_size=self.pub_queue_size)
             self.pub_rgb = self.create_publisher(Image, 'rgb',
                                                  self.pub_queue_size)
-        if "depth_sensor" in self.config.habitat.simulator.agent_0.sim_sensors:
+        if "depth_sensor" in self.config.habitat.simulator.main_agent.sim_sensors:
             if self.use_continuous_agent:
                 # if we are using a ROS-based agent, we publish depth images
                 # in type Image
@@ -914,6 +917,450 @@ class HabitatEnvNode(Node):
             or self.pub_pointgoal_with_gps_compass.get_num_connections() == 0
         ):
             pass
+
+    def reset(self):
+        r"""
+        Resets the agent and the simulator. Requires being called only from
+        the main thread.
+        """
+        # reset the simulator
+        with self.enable_reset_cv:
+            while self.enable_reset is False:
+                self.enable_reset_cv.wait()
+
+            # disable reset
+            self.enable_reset = False
+
+            # if shutdown is signalled, return immediately
+            with self.shutdown_lock:
+                if self.shutdown:
+                    return
+
+            # locate the last episode specified
+            if self.episode_id_last != EvalEpisodeSpecialIDs.REQUEST_NEXT:
+                # iterate to the last episode. If not found, the loop exits upon a
+                # StopIteration exception
+                last_ep_found = False
+                while not last_ep_found:
+                    try:
+                        self.env.reset()
+                        e = self.env._env.current_episode
+                        if (str(e.episode_id) == str(self.episode_id_last)) and (
+                            e.scene_id == self.scene_id_last):
+                            self.logger.info(
+                                f"Last episode found: episode-id={self.episode_id_last}, scene-id={self.scene_id_last}"
+                            )
+                            last_ep_found = True
+                    except StopIteration:
+                        self.logger.info("Last episode not found!")
+                        raise StopIteration
+            else:
+                # evaluate from the next episode
+                pass
+
+            # initialize timing variables
+            with self.timing_lock:
+                self.t_reset_elapsed = 0.0
+                self.t_sim_elapsed = 0.0
+
+            # ------------ log reset time start ------------
+            t_reset_start = time.clock()
+            # --------------------------------------------
+
+            # initialize observations
+            self.observations = self.env.reset()
+
+            # ------------  log reset time end  ------------
+            t_reset_end = time.clock()
+            with self.timing_lock:
+                self.t_reset_elapsed += t_reset_end - t_reset_start
+            # --------------------------------------------
+
+            # initialize step counter
+            with self.command_cv:
+                self.count_steps = 0
+
+#     def _enable_reset(self, request, enable_roam):
+#         r"""
+#         Helper method to set self.episode_id_last, self.scene_id_last,
+#         enable reset and alert threads waiting for reset to be enabled.
+#         :param request: request dictionary, should contain field
+#             `episode_id_last` and `scene_id_last`.
+#         :param enable_roam: if should enable free-roam mode or not.
+#         """
+#         with self.enable_reset_cv:
+#             # unpack evaluator request
+#             self.episode_id_last = str(request.episode_id_last)
+#             self.scene_id_last = str(request.scene_id_last)
+
+#             # enable (env) reset
+#             assert self.enable_reset is False
+#             self.enable_reset = True
+#             self.enable_roam = enable_roam
+#             self.enable_reset_cv.notify()
+
+#     def _enable_evaluation(self):
+#         r"""
+#         Helper method to enable evaluation and alert threads waiting for evalu-
+#         ation to be enabled.
+#         """
+#         with self.enable_eval_cv:
+#             assert self.enable_eval is False
+#             self.enable_eval = True
+#             self.enable_eval_cv.notify()
+
+#     def eval_episode(self, request):
+#         r"""
+#         ROS service handler which evaluates one episode and returns evaluation
+#         metrics.
+#         :param request: evaluation parameters provided by evaluator, including
+#             last episode ID and last scene ID.
+#         :return: 1) episode ID and scene ID; 2) metrics including distance-to-
+#         goal, success and spl.
+#         """
+#         # make a response dict
+#         resp = {
+#             "episode_id": EvalEpisodeSpecialIDs.RESPONSE_NO_MORE_EPISODES,
+#             "scene_id": "",
+#             NumericalMetrics.DISTANCE_TO_GOAL: 0.0,
+#             NumericalMetrics.SUCCESS: 0.0,
+#             NumericalMetrics.SPL: 0.0,
+#             NumericalMetrics.NUM_STEPS: 0,
+#             NumericalMetrics.SIM_TIME: 0.0,
+#             NumericalMetrics.RESET_TIME: 0.0,
+#         }
+
+#         if str(request.episode_id_last) == EvalEpisodeSpecialIDs.REQUEST_SHUTDOWN:
+#             # if shutdown request, enable reset and return immediately
+#             with self.shutdown_lock:
+#                 self.shutdown = True
+#             with self.enable_reset_cv:
+#                 self.enable_reset = True
+#                 self.enable_reset_cv.notify()
+#             return resp
+#         else:
+#             # if not shutting down, enable reset and evaluation
+#             self._enable_reset(request=request, enable_roam=False)
+
+#             # enable evaluation
+#             self._enable_evaluation()
+
+#             # wait for evaluation to be over
+#             with self.enable_eval_cv:
+#                 while self.enable_eval is True:
+#                     self.enable_eval_cv.wait()
+
+#                 if self.all_episodes_evaluated is False:
+#                     # collect episode info and metrics
+#                     resp = {
+#                         "episode_id": str(self.env._env.current_episode.episode_id),
+#                         "scene_id": str(self.env._env.current_episode.scene_id),
+#                     }
+#                     metrics = self.env._env.get_metrics()
+#                     metrics_dic = {
+#                         k: metrics[k]
+#                         for k in [
+#                             NumericalMetrics.DISTANCE_TO_GOAL,
+#                             NumericalMetrics.SUCCESS,
+#                             NumericalMetrics.SPL,
+#                         ]
+#                     }
+#                     with self.timing_lock:
+#                         with self.command_cv:
+#                             metrics_dic[NumericalMetrics.NUM_STEPS] = self.count_steps
+#                             metrics_dic[NumericalMetrics.SIM_TIME] = (
+#                                 self.t_sim_elapsed / self.count_steps
+#                             )
+#                             metrics_dic[
+#                                 NumericalMetrics.RESET_TIME
+#                             ] = self.t_reset_elapsed
+#                     resp.update(metrics_dic)
+#                 else:
+#                     # no episode is evaluated. Toggle the flag so the env node
+#                     # can be reused
+#                     self.all_episodes_evaluated = False
+#                 return resp
+
+#     def roam(self, request):
+#         r"""
+#         ROS service handler which allows an agent to roam freely within a scene,
+#         starting from the initial position of the specified episode.
+#         :param request: episode ID and scene ID.
+#         :return: acknowledge signal.
+#         """
+#         # if not shutting down, enable reset and evaluation
+#         self._enable_reset(request=request, enable_roam=True)
+
+#         # set video production flag
+#         self.make_video = request.make_video
+#         self.video_frame_period = request.video_frame_period
+
+#         # enable evaluation
+#         self._enable_evaluation()
+
+#         return True
+
+#     def cv2_to_depthmsg(self, depth_img: np.ndarray):
+#         r"""
+#         Converts a Habitat depth image to a ROS DepthImage message.
+#         :param depth_img: depth image as a numpy array
+#         :returns: a ROS Image message if using continuous agent; or
+#             a ROS DepthImage message if using discrete agent
+#         """
+#         if self.use_continuous_agent:
+#             # depth reading should be denormalized, so we get
+#             # readings in meters
+#             assert self.config.SIMULATOR.DEPTH_SENSOR.NORMALIZE_DEPTH is False
+#             depth_img_in_m = np.squeeze(depth_img, axis=2)
+#             depth_msg = CvBridge().cv2_to_imgmsg(
+#                 depth_img_in_m.astype(np.float32), encoding="passthrough"
+#             )
+#         else:
+#             depth_msg = DepthImage()
+#             depth_msg.height, depth_msg.width, _ = depth_img.shape
+#             depth_msg.step = depth_msg.width
+#             depth_msg.data = np.ravel(depth_img)
+#         return depth_msg
+
+#     def obs_to_msgs(self, observations_hab: Observations):
+#         r"""
+#         Converts Habitat observations to ROS messages.
+
+#         :param observations_hab: Habitat observations.
+#         :return: a dictionary containing RGB/depth/Pos+Orientation readings
+#         in ROS Image/Pose format.
+#         """
+#         observations_ros = {}
+
+#         # take the current sim time to later use as timestamp
+#         # for all simulator readings
+#         t_curr = rospy.Time.now()
+
+#         for sensor_uuid, _ in observations_hab.items():
+#             sensor_data = observations_hab[sensor_uuid]
+#             # we publish to each of RGB, Depth and GPS+Compass sensor
+#             if sensor_uuid == "rgb":
+#                 sensor_msg = CvBridge().cv2_to_imgmsg(
+#                     sensor_data.astype(np.uint8), encoding="rgb8"
+#                 )
+#             elif sensor_uuid == "depth":
+#                 sensor_msg = self.cv2_to_depthmsg(sensor_data)
+#             elif sensor_uuid == "pointgoal_with_gps_compass":
+#                 sensor_msg = PointGoalWithGPSCompass()
+#                 sensor_msg.distance_to_goal = sensor_data[0]
+#                 sensor_msg.angle_to_goal = sensor_data[1]
+#             # add header to message, and add the message to observations_ros
+#             if sensor_uuid in ["rgb", "depth", "pointgoal_with_gps_compass"]:
+#                 h = Header()
+#                 h.stamp = t_curr
+#                 sensor_msg.header = h
+#                 observations_ros[sensor_uuid] = sensor_msg
+
+#         return observations_ros
+
+#     def publish_sensor_observations(self):
+#         r"""
+#         Waits until evaluation is enabled, then publishes current simulator
+#         sensor readings. Requires to be called 1) after simulator reset and
+#         2) when evaluation has been enabled.
+#         """
+#         # pack observations in ROS message
+#         observations_ros = self.obs_to_msgs(self.observations)
+#         for sensor_uuid, _ in self.observations.items():
+#             # we publish to each of RGB, Depth and Ptgoal/GPS+Compass sensor
+#             if sensor_uuid == "rgb":
+#                 self.pub_rgb.publish(observations_ros["rgb"])
+#             elif sensor_uuid == "depth":
+#                 self.pub_depth.publish(observations_ros["depth"])
+#                 if self.use_continuous_agent:
+#                     self.pub_camera_info.publish(
+#                         self.make_depth_camera_info_msg(
+#                             observations_ros["depth"].header,
+#                             observations_ros["depth"].height,
+#                             observations_ros["depth"].width,
+#                         )
+#                     )
+#             elif sensor_uuid == "pointgoal_with_gps_compass":
+#                 self.pub_pointgoal_with_gps_compass.publish(
+#                     observations_ros["pointgoal_with_gps_compass"]
+#                 )
+
+#     def make_depth_camera_info_msg(self, header, height, width):
+#         r"""
+#         Create camera info message for depth camera.
+#         :param header: header to create the message
+#         :param height: height of depth image
+#         :param width: width of depth image
+#         :returns: camera info message of type CameraInfo.
+#         """
+#         # code modifed upon work by Bruce Cui
+#         camera_info_msg = CameraInfo()
+#         camera_info_msg.header = header
+#         fx, fy = width / 2, height / 2
+#         cx, cy = width / 2, height / 2
+
+#         camera_info_msg.width = width
+#         camera_info_msg.height = height
+#         camera_info_msg.distortion_model = "plumb_bob"
+#         camera_info_msg.K = np.float32([fx, 0, cx, 0, fy, cy, 0, 0, 1])
+#         camera_info_msg.D = np.float32([0, 0, 0, 0, 0])
+#         camera_info_msg.P = [fx, 0, cx, 0, 0, fy, cy, 0, 0, 0, 1, 0]
+#         return camera_info_msg
+
+#     def step(self):
+#         r"""
+#         Enact a new command and update sensor observations.
+#         Requires 1) being called only when evaluation has been enabled and
+#         2) being called only from the main thread.
+#         """
+        
+#         with self.command_cv:
+#             # wait for new action before stepping
+#             while self.new_command_published is False:
+#                 self.command_cv.wait()
+#             self.new_command_published = False
+
+#             # enact the action / velocities
+#             # ------------ log sim time start ------------
+#             t_sim_start = time.clock()
+#             # --------------------------------------------
+
+#             if self.use_continuous_agent:
+#                 self.env.set_agent_velocities(self.linear_vel, self.angular_vel)
+#                 print(self.linear_vel)
+#                 (self.observations, _, _, info) = self.env.step()
+#             else:
+#                 # NOTE: Here we call HabitatEvalRLEnv.step() which dispatches
+#                 # to Env.step() or PhysicsEnv.step_physics() depending on
+#                 # whether physics has been enabled
+#                 (self.observations, _, _, info) = self.env.step(self.action)
+
+#             # ------------  log sim time end  ------------
+#             t_sim_end = time.clock()
+#             with self.timing_lock:
+#                 self.t_sim_elapsed += t_sim_end - t_sim_start
+#             # --------------------------------------------
+
+#         # if making video, generate frames from actions
+#         if self.make_video:
+#             self.video_frame_counter += 1
+#             if self.video_frame_counter == self.video_frame_period - 1:
+#                 # NOTE: for now we only consider the case where we make videos
+#                 # in the roam mode, for a continuous agent
+#                 out_im_per_action = observations_to_image_for_roam(
+#                     self.observations,
+#                     info,
+#                     self.config.SIMULATOR.DEPTH_SENSOR.MAX_DEPTH,
+#                 )
+#                 self.observations_per_episode.append(out_im_per_action)
+#                 self.video_frame_counter = 0
+
+#         with self.command_cv:
+#             self.count_steps += 1
+
+#     def publish_and_step_for_eval(self):
+#         r"""
+#         Complete an episode and alert eval_episode() upon completion. Requires
+#         to be called after simulator reset.
+#         """
+#         # publish observations at fixed rate
+#         r = rospy.Rate(self.pub_rate)
+#         with self.enable_eval_cv:
+#             # wait for evaluation to be enabled
+#             while self.enable_eval is False:
+#                 self.enable_eval_cv.wait()
+
+#             # publish observations and step until the episode ends
+#             while not self.env._env.episode_over:
+#                 self.publish_sensor_observations()
+#                 self.step()
+#                 r.sleep()
+
+#             # now the episode is done, disable evaluation and alert eval_episode()
+#             self.enable_eval = False
+#             self.enable_eval_cv.notify()
+
+#     def publish_and_step_for_roam(self):
+#         r"""
+#         Let an agent roam within a scene until shutdown. Requires to be called
+#         1) after simulator reset, 2) shutdown_lock has not yet been acquired by
+#         the current thread.
+#         """
+#         # publish observations at fixed rate
+#         r = rospy.Rate(self.pub_rate)
+#         with self.enable_eval_cv:
+#             # wait for evaluation to be enabled
+#             while self.enable_eval is False:
+#                 self.enable_eval_cv.wait()
+
+#             # publish observations and step until shutdown
+#             while True:
+#                 with self.shutdown_lock:
+#                     if self.shutdown:
+#                         break
+#                 self.publish_sensor_observations()
+#                 self.step()
+#                 r.sleep()
+
+#             # disable evaluation
+#             self.enable_eval = False
+
+#     def callback(self, cmd_msg):
+#         r"""
+#         Takes in a command from an agent and alert the simulator to enact
+#         it.
+#         :param cmd_msg: Either a velocity command or an action command.
+#         """
+#         # unpack agent action from ROS message, and send the action
+#         # to the simulator
+#         with self.command_cv:
+#             if self.use_continuous_agent:
+#                 # set linear + angular velocity
+#                 self.linear_vel = np.array(
+#                     [(1.0 * cmd_msg.linear.y), 0.0, (-1.0 * cmd_msg.linear.x)]
+#                 )
+#                 self.angular_vel = np.array([0.0, cmd_msg.angular.z, 0.0])
+#             else:
+#                 # get the action
+#                 self.action = cmd_msg.data
+
+#             # set action publish flag and notify
+#             self.new_command_published = True
+#             self.command_cv.notify()
+
+#     def simulate(self):
+#         r"""
+#         An infinite loop where the env node 1) keeps evaluating the next
+#         episode in its RL environment, if an EvalEpisode request is given;
+#         or 2) let the agent roam freely in one episode.
+#         Breaks upon receiving shutdown command.
+#         """
+#         # iterate over episodes
+#         while True:
+#             try:
+#                 # reset the env
+#                 self.reset()
+#                 with self.shutdown_lock:
+#                     # if shutdown service called, exit
+#                     if self.shutdown:
+#                         rospy.signal_shutdown("received request to shut down")
+#                         break
+#                 with self.enable_reset_cv:
+#                     if self.enable_roam:
+#                         self.publish_and_step_for_roam()
+#                     else:
+#                         # otherwise, evaluate the episode
+#                         self.publish_and_step_for_eval()
+#             except StopIteration:
+#                 # set enable_reset and enable_eval to False, so the
+#                 # env node can evaluate again in the future
+#                 with self.enable_reset_cv:
+#                     self.enable_reset = False
+#                 with self.enable_eval_cv:
+#                     self.all_episodes_evaluated = True
+#                     self.env.reset_episode_iterator()
+#                     self.enable_eval = False
+#                     self.enable_eval_cv.notify()
 
     def on_exit_generate_video(self):
         """Make video of the current episode, if video production is turned

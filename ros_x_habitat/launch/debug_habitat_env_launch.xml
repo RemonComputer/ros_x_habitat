@@ -2,6 +2,6 @@
 
 <launch>
  	<node pkg="ros_x_habitat" exec="habitat_env" name="habitat_env_node">
-		<param name="task_config" value="/mnt/D/MyProjects/Domestic-Robot/ros_ws/src/ros_x_habitat/ros_x_habitat/configs/pointnav_d_original.yaml"/>
+		<param name="task_config" value="/mnt/D/MyProjects/Domestic-Robot/ros_ws/src/ros_x_habitat/ros_x_habitat/configs/new_pointnav_habitat_test.yaml"/>
 	</node>
 </launch>
