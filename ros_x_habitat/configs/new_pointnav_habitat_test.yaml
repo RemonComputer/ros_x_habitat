@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - pointnav_base
+  - /benchmark/nav/pointnav: pointnav_base
   - /habitat/dataset/pointnav: habitat_test
   # - /habitat/dataset/pointnav/habitat_test/data_path: /mnt/D/MyProjects/Domestic-Robot/habitat-lab/data/datasets/pointnav/habitat-test-scenes/v1/{split}/{split}.json.gz
   - _self_
