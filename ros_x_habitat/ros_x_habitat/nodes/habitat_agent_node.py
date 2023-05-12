@@ -369,7 +369,7 @@ class HabitatAgentNode(Node):
             description='The type of inputs to the agent possible values are:'
             ' ["blind", "rgb", "depth", "rgbd"]')
         self.declare_parameter('input_type',
-                               "blind",
+                               "rgbd",
                                input_type_descriptor)
         model_path_descriptor = ParameterDescriptor(
             description='The habitat agent model path to load')
@@ -400,14 +400,20 @@ class HabitatAgentNode(Node):
 
     def initialize_agent(self) -> None:
         self.get_logger().info('Initailizing agent...')
+        # this configuration is taken from
+        # habitat-lab/habitat-baselines/habitat_baselines/agents/ppo_agents.py
+        # also check
+        # habitat-lab/habitat-lab/habitat/config/habitat/task/pointnav.yaml
         self.agent_config = OmegaConf.create({
             'INPUT_TYPE': self.get_parameter('input_type').
             get_parameter_value().string_value,
             'MODEL_PATH': self.get_parameter('model_path').
             get_parameter_value().string_value,
-            'RANDOM_SEED': 0,
-            'PTH_GPU_ID': 0,
+            'RESOLUTION': 256,
             'HIDDEN_SIZE': 512,
+            'RANDOM_SEED': 7,
+            'PTH_GPU_ID': 0,
+            'GOAL_SENSOR_UUID': 'pointgoal_with_gps_compass',
         })
         # lock guarding access to self.action, self.count_steps,
         # self.agent and self.t_agent_elapsed
