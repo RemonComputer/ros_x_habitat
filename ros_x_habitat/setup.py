@@ -12,6 +12,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + "/launch/", glob('launch/*launch.xml')),
+        ('share/' + package_name + "/ros_configs/", glob('ros_configs/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

@@ -40,7 +40,8 @@
   <exec_depend>nav2_bt_navigator</exec_depend>                           
   <exec_depend>rviz2</exec_depend>
   <!-- turtlebot3_navigation2: replaces turtlebot3_navigation -->
-  <exec_depend>turtlebot3_navigation2</exec_depend>                      
+  <exec_depend>turtlebot3_navigation2</exec_depend>
+  <exec_depend>turtlebot3_gazebo</exec_depend>                      
   <!-- laser_scan_matcher: unsupported -->
   <!-- hector_geotiff: unsupported
   hector_slam_launch: unsupported
