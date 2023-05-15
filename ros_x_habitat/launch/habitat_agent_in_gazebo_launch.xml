@@ -1,0 +1,33 @@
+<!-- Launch file used for debugging the habitat_env_node -->
+<launch>
+	<!-- args that can be set from the command line or a default will be used -->
+	<arg name="turtlebot_model" default="waffle"/>
+	<arg name="agent_input_type" default="rgbd"/>
+	<arg name="agent_model_path" default="/mnt/D/MyProjects/Domestic-Robot/ros_ws/src/ros_x_habitat/ros_x_habitat/data/checkpoints/v2/gibson-rgbd-best.pth"/>
+	<arg name="agent_sensor_pub_rate" default="10.0"/>
+	<arg name="agent_goal_x" default="1.0"/>
+	<arg name="agent_goal_y" default="1.0"/>
+
+	
+	<!-- Used environment variables -->
+	<set_env name="TURTLEBOT3_MODEL" value="$(var turtlebot_model)" />
+
+	<!-- launch file turtlebot3_gazebo -->
+	<include file="$(find-pkg-share turtlebot3_gazebo)/launch/turtlebot3_house.launch.py"/>
+
+	<!-- launching the package nodes -->
+	<node pkg="ros_x_habitat" exec="habitat_agent" name="habitat_agent">
+		<param name="input_type" value="$(var agent_input_type)"/>
+		<param name="model_path" value="$(var agent_model_path)"/>
+		<param name="sensor_pub_rate" value="$(var agent_sensor_pub_rate)"/>
+	</node>
+	<node pkg="ros_x_habitat" exec="habitat_agent_to_gazebo" name="habitat_agent_to_gazebo">
+		<param name="control_period" value="1.0"/>
+	</node>
+	<node pkg="ros_x_habitat" exec="gazebo_to_habitat_agent" name="gazebo_to_habitat_agent">
+		<param name="final_pointgoal_pos" value="[$(var agent_goal_x), $(var agent_goal_y), 0.01]"/>
+	</node>
+
+	<!-- Launching rviz -->
+	<executable cmd="rviz2 -d $(find-pkg-share ros_x_habitat)/ros_configs/habitat_agent_in_gazebo.rviz"/>
+</launch>
