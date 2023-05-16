@@ -499,9 +499,12 @@ class HabitatAgentNode(Node):
             "agent making sure env subscribed to command topic...")
 #         while self.pub.get_num_connections() == 0:
 #             pass
-        self.get_logger().info('waiting for nodes to connect to this node...')
+        # self.get_logger().info('waiting for nodes to connect to this node...')
+        sleep_rate = self.create_rate(1)
         while self.pub.get_subscription_count() == 0:
-            pass
+            self.get_logger().info(
+                'waiting for nodes to connect to this node...')
+            sleep_rate.sleep()
 
     def reset_agent(self, request):
         r"""

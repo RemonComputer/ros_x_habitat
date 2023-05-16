@@ -2,11 +2,11 @@
 <launch>
 	<!-- args that can be set from the command line or a default will be used -->
 	<arg name="turtlebot_model" default="waffle"/>
-	<arg name="agent_input_type" default="rgbd"/>
-	<arg name="agent_model_path" default="/mnt/D/MyProjects/Domestic-Robot/ros_ws/src/ros_x_habitat/ros_x_habitat/data/checkpoints/v2/gibson-rgbd-best.pth"/>
+	<arg name="agent_input_type" default="rgb"/>
+	<arg name="agent_model_path" default="/mnt/D/MyProjects/Domestic-Robot/ros_ws/src/ros_x_habitat/ros_x_habitat/data/checkpoints/v2/gibson-rgb-best.pth"/>
 	<arg name="agent_sensor_pub_rate" default="10.0"/>
-	<arg name="agent_goal_x" default="1.0"/>
-	<arg name="agent_goal_y" default="1.0"/>
+	<arg name="agent_goal_x" default="-10.0"/>
+	<arg name="agent_goal_y" default="-10.0"/>
 
 	
 	<!-- Used environment variables -->
@@ -26,6 +26,7 @@
 	</node>
 	<node pkg="ros_x_habitat" exec="gazebo_to_habitat_agent" name="gazebo_to_habitat_agent">
 		<param name="final_pointgoal_pos" value="[$(var agent_goal_x), $(var agent_goal_y), 0.01]"/>
+		<remap from="/camera/rgb/image_raw" to="/camera/image_raw"/>
 	</node>
 
 	<!-- Launching rviz -->
