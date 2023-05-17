@@ -5,6 +5,8 @@ import numpy as np
 from omegaconf import OmegaConf
 
 from habitat.config import DictConfig as Config
+from habitat.config import read_write
+from habitat.config.default_structured_configs import TopDownMapMeasurementConfig
 from habitat.core.dataset import Dataset, Episode
 from habitat.core.embodied_task import Measure
 from habitat.core.registry import registry
@@ -30,24 +32,30 @@ def add_top_down_map_for_roam_to_config(config):
     """
     # config.defrost()
     # OmegaConf.set_readonly(config, False)
-    dict_obj = OmegaConf.to_container(config)
-    dict_obj['habitat']['task']['measurements'].append("top_down_map_for_roam")
-    # config.habitat.task.top_down_map_for_roam = config.task.top_down_map.clone()
-    # config.habitat.task.top_down_map_for_roam.draw_goal_aabbs = False
-    # config.habitat.task.top_down_map_for_roam.draw_goal_positions = False
-    # config.habitat.task.top_down_map_for_roam.draw_shortest_path = False
-    # config.habitat.task.top_down_map_for_roam.type = "TopDownMapForRoam"
-    # config.habitat.task.append('top_down_map_for_roam')
-    dict_obj['habitat']['task']['top_down_map_for_roam'] = {
-        'draw_goal_aabbs': False,
-        'draw_goal_positions': False,
-        'draw_shortest_path': False,
-        'type': 'TopDownMapForRoam',
-    }
-    # config.freeze()
-    # OmegaConf.set_readonly(config, True)
-    new_config = OmegaConf.create(dict_obj)
-    return new_config
+    # dict_obj = OmegaConf.to_container(config)
+    # dict_obj['habitat']['task']['measurements'].append("top_down_map_for_roam")
+    # # config.habitat.task.top_down_map_for_roam = config.task.top_down_map.clone()
+    # # config.habitat.task.top_down_map_for_roam.draw_goal_aabbs = False
+    # # config.habitat.task.top_down_map_for_roam.draw_goal_positions = False
+    # # config.habitat.task.top_down_map_for_roam.draw_shortest_path = False
+    # # config.habitat.task.top_down_map_for_roam.type = "TopDownMapForRoam"
+    # # config.habitat.task.append('top_down_map_for_roam')
+    # dict_obj['habitat']['task']['top_down_map_for_roam'] = {
+    #     'draw_goal_aabbs': False,
+    #     'draw_goal_positions': False,
+    #     'draw_shortest_path': False,
+    #     'type': 'TopDownMapForRoam',
+    # }
+    # # config.freeze()
+    # # OmegaConf.set_readonly(config, True)
+    # new_config = OmegaConf.create(dict_obj)
+    # return new_config
+    with read_write(config):
+        config.habitat.task.measurements['top_down_map'] = \
+            TopDownMapMeasurementConfig(draw_goal_aabbs=False,
+                                        draw_goal_positions=False,
+                                        draw_shortest_path=False)
+    return config
 
 
 

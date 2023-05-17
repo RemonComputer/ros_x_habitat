@@ -9,7 +9,7 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 
 import numpy as np
-# from omegaconf import OmegaConf
+from omegaconf import OmegaConf, open_dict
 # import rospy
 import habitat_sim
 import habitat.core.simulator
@@ -17,6 +17,7 @@ from habitat.core.registry import registry
 from habitat.config.default import get_config
 from habitat.core.simulator import Observations
 from habitat.config import read_write
+from habitat.config.default_structured_configs import TopDownMapMeasurementConfig
 from ros_x_habitat_interfaces.msg import PointGoalWithGPSCompass, DepthImage
 from ros_x_habitat_interfaces.srv import EvalEpisode, ResetAgent, GetAgentTime, Roam
 from sensor_msgs.msg import Image, CameraInfo
@@ -725,7 +726,10 @@ class HabitatEnvNode(Node):
             1 / pub_rate_value, self.simulate)
         self.logger.info("env initialized")
 
-    def precondition_check(self):
+    def precondition_check(self) -> None:
+        """Checks that if we are using continous agent then we must be
+        enabling physics within the simulator.
+        """
         # precondition check
         continous_agent_value = self.get_parameter('use_continuous_agent').\
             get_parameter_value().bool_value
@@ -736,21 +740,20 @@ class HabitatEnvNode(Node):
         if continous_agent_value:
             assert enable_physics_sim_value
 
-    def setup_environment_config(self):
+    def setup_environment_config(self) -> None:
         # set up environment config
-        task_config_value = self.get_parameter('task_config').\
+        task_config_file_path = self.get_parameter('task_config').\
             get_parameter_value().string_value
-        self.config = get_config(task_config_value)
+        self.config = get_config(task_config_file_path)
         # embed top-down map in config
         #self.config.defrost()
         # OmegaConf.set_readonly(self.config, False)
-        with read_write(self.config):
-            # self.config.habitat.task.measurements.append("top_down_map")
+        # with read_write(self.config):
+            # self.config.habitat.task.measurements['top_down_map'] = TopDownMapMeasurementConfig()
             # self.config.habitat.task.measurements.top_down_map = ''
-            pass
         # self.config.freeze()
         # OmegaConf.set_readonly(self.config, True)
-        # self.config = add_top_down_map_for_roam_to_config(self.config)
+        self.config = add_top_down_map_for_roam_to_config(self.config)
         # print(self.config)
 
     def setup_habitat_environment(self) -> None:
