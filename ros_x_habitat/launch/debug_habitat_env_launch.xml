@@ -3,5 +3,6 @@
 <launch>
  	<node pkg="ros_x_habitat" exec="habitat_env" name="habitat_env_node">
 		<param name="task_config" value="/mnt/D/MyProjects/Domestic-Robot/ros_ws/src/ros_x_habitat/ros_x_habitat/configs/new_pointnav_habitat_test.yaml"/>
+		<param name="enable_physics_sim" value="true"/>
 	</node>
 </launch>
