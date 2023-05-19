@@ -761,6 +761,7 @@ class HabitatEnvNode(Node):
             get_parameter_value().bool_value
         if enable_physics_sim_value:
             HabitatSimEvaluator.overwrite_simulator_config(self.config)
+        # should I set config.habitat.simulator.step_physics to false
         # define environment
         self.env = HabitatEvalRLEnv(
             config=self.config, enable_physics=enable_physics_sim_value

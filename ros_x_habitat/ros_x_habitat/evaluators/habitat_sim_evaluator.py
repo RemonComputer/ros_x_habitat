@@ -1,6 +1,7 @@
 import numpy as np
 from habitat.config import DictConfig as Config
 from habitat.config.default import get_config
+from habitat.config import read_write
 from typing import List, Tuple, Dict
 from collections import defaultdict
 from ros_x_habitat.evaluators.evaluator import Evaluator
@@ -33,18 +34,20 @@ class HabitatSimEvaluator(Evaluator):
         Overwrite simulator and task configurations when physics is enabled.
         :param config: environment config to be overwritten.
         """
-        for k in config.PHYSICS_SIMULATOR.keys():
-            if isinstance(config.PHYSICS_SIMULATOR[k], Config):
-                for inner_k in config.PHYSICS_SIMULATOR[k].keys():
-                    config.SIMULATOR[k][inner_k] = config.PHYSICS_SIMULATOR[k][inner_k]
-            else:
-                config.SIMULATOR[k] = config.PHYSICS_SIMULATOR[k]
+        # for k in config.PHYSICS_SIMULATOR.keys():
+        #     if isinstance(config.PHYSICS_SIMULATOR[k], Config):
+        #         for inner_k in config.PHYSICS_SIMULATOR[k].keys():
+        #             config.SIMULATOR[k][inner_k] = config.PHYSICS_SIMULATOR[k][inner_k]
+        #     else:
+        #         config.SIMULATOR[k] = config.PHYSICS_SIMULATOR[k]
+        with read_write(config):
+            config.habitat.simulator.step_physics = True
         try:
             from habitat.sims.habitat_simulator.habitat_simulator import (
                 HabitatSim,
             )
-            from src.sims.habitat_physics_simulator import HabitatPhysicsSim
-            from src.tasks.habitat_physics_task import PhysicsNavigationTask
+            from ros_x_habitat.sims.habitat_physics_simulator import HabitatPhysicsSim
+            from ros_x_habitat.tasks.habitat_physics_task import PhysicsNavigationTask
             from habitat.sims.habitat_simulator.actions import (
                 HabitatSimV1ActionSpaceConfiguration,
             )

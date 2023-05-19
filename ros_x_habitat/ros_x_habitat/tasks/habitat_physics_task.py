@@ -12,7 +12,7 @@ from habitat.core.simulator import (
     Simulator,
 )
 from habitat.tasks.nav.nav import (
-    merge_sim_episode_config,
+    # merge_sim_episode_config,
     SimulatorTaskAction,
     MoveForwardAction,
     TurnLeftAction,
@@ -141,7 +141,9 @@ class PhysicsNavigationTask(EmbodiedTask):
         return observations
 
     def overwrite_sim_config(self, sim_config: Any, episode: Episode) -> Any:
-        return merge_sim_episode_config(sim_config, episode)
+        raise NotImplementedError('Still cannot find equivilant for this function')
+        # return merge_sim_episode_config(sim_config, episode)
+        pass
 
     def _check_episode_is_active(self, *args: Any, **kwargs: Any) -> bool:
         return not getattr(self, "is_stop_called", False)

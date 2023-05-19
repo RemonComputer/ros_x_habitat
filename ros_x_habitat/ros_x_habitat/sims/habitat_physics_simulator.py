@@ -14,12 +14,13 @@ from habitat.core.dataset import Episode
 from habitat.core.registry import registry
 from habitat.core.simulator import (
     AgentState,
-    Config,
+#    Config,
     Observations,
     SensorSuite,
     ShortestPathPoint,
     Simulator,
 )
+from habitat.config import DictConfig as Config
 from habitat.core.spaces import Space
 from habitat.sims.habitat_simulator.habitat_simulator import (
     HabitatSimSensor,
