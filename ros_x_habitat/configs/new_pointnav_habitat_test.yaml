@@ -9,6 +9,7 @@ habitat:
   dataset:
     data_path: /mnt/D/MyProjects/Domestic-Robot/habitat-sim/data/datasets/pointnav/habitat-test-scenes/v1/{split}/{split}.json.gz
     scenes_dir: /mnt/D/MyProjects/Domestic-Robot/habitat-sim/data/scene_datasets/
+    content_scenes: ["skokloster-castle"]
   environment:
     max_episode_steps: 500
   simulator:
