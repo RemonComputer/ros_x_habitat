@@ -22,3 +22,5 @@ habitat:
           depth_sensor:
             width: 256
             height: 256
+video_option: ["disk"]
+video_dir: "/mnt/D/MyProjects/Domestic-Robot/test_habitat_evaluator_with_physics/"
