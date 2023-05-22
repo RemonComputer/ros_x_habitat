@@ -780,9 +780,30 @@ class HabitatEnvNode(Node):
     def setup_multithreading_stuff(self) -> None:
         # shutdown is set to true by eval_episode() to indicate the
         # evaluator wants the node to shutdown
-        self.shutdown_lock = Lock()
-        with self.shutdown_lock:
-            self.shutdown = False
+        # ----------------------------------------
+        # The lock that locks the start and shutdown flags
+        self.services_lock_ = Lock()
+        with self.services_lock_:
+            self.start_ = False
+            self.reset_ = False
+            # video production variables
+            self.make_video_ = False
+            self.video_frame_period_ = 1  # NOTE: frame rate defined as x
+            # steps/frame
+            self.episode_id_last_ = None
+            self.scene_id_last_ = None
+            # working in eval epispode mode by default
+            self.enable_roam_ = False
+
+        self.observations_per_episode_ = []
+        self.video_frame_counter_ = 0
+
+        # A lock that is used to pass new messages to the node
+        self.messages_lock_ = Lock()
+        with self.messages_lock_:
+            self.linear_vel_ = None
+            self.angular_vel_ = None
+            self.action_ = None
 
         # enable_eval is set to true by eval_episode() to allow
         # publish_sensor_observations() and step() to run
@@ -794,45 +815,47 @@ class HabitatEnvNode(Node):
         # all_episodes_evaluated is set to True by main() to indicate
         # no more episodes left to evaluate. eval_episodes() then signals
         # back to evaluator, and set it to False again for re-use
-        self.all_episodes_evaluated = False
-        self.enable_eval = False
-        self.enable_eval_cv = Condition()
+        # self.all_episodes_evaluated = False
+        # self.enable_eval = False
+        # self.enable_eval_cv = Condition()
+        # --------------------------------------------
 
         # enable_reset is set to true by eval_episode() or roam() to allow
         # reset() to run
         # enable_reset is set to false by reset() after simulator reset
-        self.enable_reset_cv = Condition()
-        with self.enable_reset_cv:
-            self.enable_reset = False
-            self.enable_roam = False
-            self.episode_id_last = None
-            self.scene_id_last = None
+        # self.enable_reset_cv = Condition()
+        # with self.enable_reset_cv:
+        #     self.enable_reset = False
+        #     self.enable_roam = False
+        #     self.episode_id_last = None
+        #     self.scene_id_last = None
+        # -----------------------------------------------------
 
         # agent velocities/action and variables to keep things synchronized
-        self.command_cv = Condition()
-        with self.command_cv:
-            if self.use_continuous_agent:
-                self.linear_vel = None
-                self.angular_vel = None
-            else:
-                self.action = None
-            self.count_steps = None
-            self.new_command_published = False
+        # self.command_cv = Condition()
+        # with self.command_cv:
+        #     if self.use_continuous_agent:
+        #         self.linear_vel = None
+        #         self.angular_vel = None
+        #     else:
+        #         self.action = None
+        #     self.count_steps = None
+        #     self.new_command_published = False
 
-        self.observations = None
+        # self.observations = None
 
         # timing variables and guarding lock
-        self.timing_lock = Lock()
-        with self.timing_lock:
-            self.t_reset_elapsed = None
-            self.t_sim_elapsed = None
+        # self.timing_lock = Lock()
+        # with self.timing_lock:
+        #     self.t_reset_elapsed = None
+        #     self.t_sim_elapsed = None
 
         # video production variables
-        self.make_video = False
-        self.observations_per_episode = []
-        self.video_frame_counter = 0
-        self.video_frame_period = 1  # NOTE: frame rate defined as x
-                                     # steps/frame
+        # self.make_video = False
+        # self.observations_per_episode = []
+        # self.video_frame_counter = 0
+        # self.video_frame_period = 1  # NOTE: frame rate defined as x
+        #                              # steps/frame
 
     def setup_services(self) -> None:
         #         # establish evaluation service server
@@ -920,12 +943,12 @@ class HabitatEnvNode(Node):
         # wait until connections with the agent is established
         self.logger.info(
             "env making sure agent is subscribed to sensor topics...")
-        while (
-            self.pub_rgb.get_subscription_count() == 0
-            or self.pub_depth.get_subscription_count() == 0
-            or self.pub_pointgoal_with_gps_compass.get_subscription_count() == 0
-        ):
-            pass
+        # while (
+        #     self.pub_rgb.get_subscription_count() == 0
+        #     or self.pub_depth.get_subscription_count() == 0
+        #     or self.pub_pointgoal_with_gps_compass.get_subscription_count() == 0
+        # ):
+        #     pass
 
     def reset(self):
         r"""
@@ -933,61 +956,61 @@ class HabitatEnvNode(Node):
         the main thread.
         """
         # reset the simulator
-        with self.enable_reset_cv:
-            while self.enable_reset is False:
-                self.enable_reset_cv.wait()
+        # with self.enable_reset_cv:
+        #     while self.enable_reset is False:
+        #         self.enable_reset_cv.wait()
 
-            # disable reset
-            self.enable_reset = False
+        #     # disable reset
+        #     self.enable_reset = False
 
-            # if shutdown is signalled, return immediately
-            with self.shutdown_lock:
-                if self.shutdown:
-                    return
+        #     # if shutdown is signalled, return immediately
+        #     with self.shutdown_lock:
+        #         if self.shutdown:
+        #             return
 
-            # locate the last episode specified
-            if self.episode_id_last != EvalEpisodeSpecialIDs.REQUEST_NEXT:
-                # iterate to the last episode. If not found, the loop exits upon a
-                # StopIteration exception
-                last_ep_found = False
-                while not last_ep_found:
-                    try:
-                        self.env.reset()
-                        e = self.env._env.current_episode
-                        if (str(e.episode_id) == str(self.episode_id_last)) and (
-                            e.scene_id == self.scene_id_last):
-                            self.logger.info(
-                                f"Last episode found: episode-id={self.episode_id_last}, scene-id={self.scene_id_last}"
-                            )
-                            last_ep_found = True
-                    except StopIteration:
-                        self.logger.info("Last episode not found!")
-                        raise StopIteration
-            else:
-                # evaluate from the next episode
-                pass
+        #     # locate the last episode specified
+        #     if self.episode_id_last != EvalEpisodeSpecialIDs.REQUEST_NEXT:
+        #         # iterate to the last episode. If not found, the loop exits upon a
+        #         # StopIteration exception
+        #         last_ep_found = False
+        #         while not last_ep_found:
+        #             try:
+        #                 self.env.reset()
+        #                 e = self.env._env.current_episode
+        #                 if (str(e.episode_id) == str(self.episode_id_last)) and (
+        #                     e.scene_id == self.scene_id_last):
+        #                     self.logger.info(
+        #                         f"Last episode found: episode-id={self.episode_id_last}, scene-id={self.scene_id_last}"
+        #                     )
+        #                     last_ep_found = True
+        #             except StopIteration:
+        #                 self.logger.info("Last episode not found!")
+        #                 raise StopIteration
+        #     else:
+        #         # evaluate from the next episode
+        #         pass
 
             # initialize timing variables
-            with self.timing_lock:
-                self.t_reset_elapsed = 0.0
-                self.t_sim_elapsed = 0.0
+            # with self.timing_lock:
+            #     self.t_reset_elapsed = 0.0
+            #     self.t_sim_elapsed = 0.0
 
-            # ------------ log reset time start ------------
-            t_reset_start = time.clock()
+            # # ------------ log reset time start ------------
+            # t_reset_start = time.clock()
             # --------------------------------------------
 
             # initialize observations
-            self.observations = self.env.reset()
+        self.observations = self.env.reset()
 
-            # ------------  log reset time end  ------------
-            t_reset_end = time.clock()
-            with self.timing_lock:
-                self.t_reset_elapsed += t_reset_end - t_reset_start
-            # --------------------------------------------
+            # # ------------  log reset time end  ------------
+            # t_reset_end = time.clock()
+            # with self.timing_lock:
+            #     self.t_reset_elapsed += t_reset_end - t_reset_start
+            # # --------------------------------------------
 
-            # initialize step counter
-            with self.command_cv:
-                self.count_steps = 0
+            # # initialize step counter
+            # with self.command_cv:
+            #     self.count_steps = 0
 
     def _enable_reset(self, request, enable_roam):
         r"""
@@ -1098,14 +1121,20 @@ class HabitatEnvNode(Node):
         :return: acknowledge signal.
         """
         # if not shutting down, enable reset and evaluation
-        self._enable_reset(request=request, enable_roam=True)
+        # self._enable_reset(request=request, enable_roam=True)
 
-        # set video production flag
-        self.make_video = request.make_video
-        self.video_frame_period = request.video_frame_period
+        with self.services_lock_:
+            # set video production flag
+            self.make_video_ = request.make_video
+            self.video_frame_period_ = request.video_frame_period
+            self.scene_id_last_ = request.scene_id_last
+            self.episode_id_last_ = request.episode_id_last
+            self.enable_roam_ = True
+            self.start_ = True
+            self.reset_ = True
 
         # enable evaluation
-        self._enable_evaluation()
+        # self._enable_evaluation()
 
         return True
 
@@ -1222,49 +1251,50 @@ class HabitatEnvNode(Node):
         Requires 1) being called only when evaluation has been enabled and
         2) being called only from the main thread.
         """
-        
-        with self.command_cv:
-            # wait for new action before stepping
-            while self.new_command_published is False:
-                self.command_cv.wait()
-            self.new_command_published = False
+        # with self.command_cv:
+        #     # wait for new action before stepping
+        #     while self.new_command_published is False:
+        #         self.command_cv.wait()
+        #     self.new_command_published = False
 
-            # enact the action / velocities
-            # ------------ log sim time start ------------
-            t_sim_start = time.clock()
-            # --------------------------------------------
+        #     # enact the action / velocities
+        #     # ------------ log sim time start ------------
+        #     t_sim_start = time.clock()
+        #     # --------------------------------------------
 
-            if self.use_continuous_agent:
-                self.env.set_agent_velocities(self.linear_vel, self.angular_vel)
-                print(self.linear_vel)
-                (self.observations, _, _, info) = self.env.step()
-            else:
-                # NOTE: Here we call HabitatEvalRLEnv.step() which dispatches
-                # to Env.step() or PhysicsEnv.step_physics() depending on
-                # whether physics has been enabled
-                (self.observations, _, _, info) = self.env.step(self.action)
+        if self.use_continuous_agent:
+            self.env.set_agent_velocities(self.linear_vel, self.angular_vel)
+            # print(self.linear_vel)
+            (self.observations, _, _, info) = self.env.step()
+        else:
+            # NOTE: Here we call HabitatEvalRLEnv.step() which dispatches
+            # to Env.step() or PhysicsEnv.step_physics() depending on
+            # whether physics has been enabled
+            with self.messages_lock_:
+                action_temp = self.action
+            (self.observations, _, _, info) = self.env.step(action_temp)
 
-            # ------------  log sim time end  ------------
-            t_sim_end = time.clock()
-            with self.timing_lock:
-                self.t_sim_elapsed += t_sim_end - t_sim_start
-            # --------------------------------------------
+            # # ------------  log sim time end  ------------
+            # t_sim_end = time.clock()
+            # with self.timing_lock:
+            #     self.t_sim_elapsed += t_sim_end - t_sim_start
+            # # --------------------------------------------
 
-        # if making video, generate frames from actions
-        if self.make_video:
-            self.video_frame_counter += 1
-            if self.video_frame_counter == self.video_frame_period - 1:
-                # NOTE: for now we only consider the case where we make videos
-                # in the roam mode, for a continuous agent
-                out_im_per_action = observations_to_image_for_roam(
-                    self.observations,
-                    info,
-                    self.config.SIMULATOR.DEPTH_SENSOR.MAX_DEPTH,
-                )
-                self.observations_per_episode.append(out_im_per_action)
-                self.video_frame_counter = 0
-
-        with self.command_cv:
+        with self.services_lock_:
+            # if making video, generate frames from actions
+            if self.make_video:
+                self.video_frame_counter += 1
+                if self.video_frame_counter == self.video_frame_period - 1:
+                    # NOTE: for now we only consider the case where we make videos
+                    # in the roam mode, for a continuous agent
+                    out_im_per_action = observations_to_image_for_roam(
+                        self.observations,
+                        info,
+                        self.config.habitat.simulator.depth_sensor.max_depth,
+                    )
+                    self.observations_per_episode.append(out_im_per_action)
+                    self.video_frame_counter = 0
+            # with self.command_cv:
             self.count_steps += 1
 
     def publish_and_step_for_eval(self):
@@ -1322,7 +1352,7 @@ class HabitatEnvNode(Node):
         """
         # unpack agent action from ROS message, and send the action
         # to the simulator
-        with self.command_cv:
+        with self.messages_lock_:                # self.command_cv:
             if self.use_continuous_agent:
                 # set linear + angular velocity
                 self.linear_vel = np.array(
@@ -1334,8 +1364,8 @@ class HabitatEnvNode(Node):
                 self.action = cmd_msg.data
 
             # set action publish flag and notify
-            self.new_command_published = True
-            self.command_cv.notify()
+            # self.new_command_published = True
+            # self.command_cv.notify()
 
     def simulate(self):
         r"""
@@ -1346,39 +1376,69 @@ class HabitatEnvNode(Node):
         """
         # iterate over episodes
         # while True:
-        try:
+        # try:
             # reset the env
             # self.reset()
             # with self.enable_reset_cv:
             #     if 
-            with self.shutdown_lock:
-                # if shutdown service called, exit
-                if self.shutdown:
-                    # rospy.signal_shutdown("received request to shut down")
-                    rclpy.shutdown("received request to shut down")
-                    # break
-            with self.enable_reset_cv:
-                if self.enable_eval is False:
-                    # self.enable_eval_cv.wait()
-                    return
-                if self.env._env.episode_over:
-                    self.reset()
-                    return
-                if self.enable_roam:
-                    self.publish_and_step_for_roam()
-                else:
-                    # otherwise, evaluate the episode
-                    self.publish_and_step_for_eval()
-        except StopIteration:
-            # set enable_reset and enable_eval to False, so the
-            # env node can evaluate again in the future
-            with self.enable_reset_cv:
-                self.enable_reset = False
-            with self.enable_eval_cv:
-                self.all_episodes_evaluated = True
-                self.env.reset_episode_iterator()
-                self.enable_eval = False
-                self.enable_eval_cv.notify()
+            # with self.shutdown_lock:
+            #     # if shutdown service called, exit
+            #     if self.shutdown:
+            #         # rospy.signal_shutdown("received request to shut down")
+            #         rclpy.shutdown("received request to shut down")
+            #         # break
+            # with self.enable_reset_cv:
+            #     if self.enable_eval is False:
+            #         # self.enable_eval_cv.wait()
+            #         return
+            #     if self.env._env.episode_over:
+            #         self.reset()
+            #         return
+            #     if self.enable_roam:
+            #         self.publish_and_step_for_roam()
+            #     else:
+            #         # otherwise, evaluate the episode
+            #         self.publish_and_step_for_eval()
+        # Getting a snapshot of the shared variables
+        with self.services_lock_:
+            make_video_temp = self.make_video_
+            video_frame_period_temp = self.video_frame_period_
+            scene_id_last_temp = self.scene_id_last_
+            episode_id_last_temp = self.episode_id_last_
+            enable_roam_temp = self.enable_roam_
+            start_temp = self.start_
+            reset_temp = self.reset_
+        # Reset the environment if reset signal is enabled
+        if reset_temp:
+            self.reset()
+            with self.services_lock_:
+                self.reset_ = False
+            self.publish_sensor_observations()
+            return
+        # Quit the simulation if start signal is false
+        if not start_temp:
+            return
+        # Change the start signal if the episode is over
+        if self.env._env.episode_over:
+            # self.reset()
+            with self.services_lock_:
+                self.start_ = False
+            return
+        if enable_roam_temp:
+            self.step()
+            self.publish_sensor_observations()
+        else:
+            raise NotImplementedError("I didn't port the evaluation mode yet")
+        # except StopIteration:
+        #     # set enable_reset and enable_eval to False, so the
+        #     # env node can evaluate again in the future
+        #     with self.enable_reset_cv:
+        #         self.enable_reset = False
+        #     with self.enable_eval_cv:
+        #         self.all_episodes_evaluated = True
+        #         self.env.reset_episode_iterator()
+        #         self.enable_eval = False
+        #         self.enable_eval_cv.notify()
 
     def on_exit_generate_video(self):
         """Make video of the current episode, if video production is turned
